@@ -29,6 +29,7 @@ let quizCards     = [];   // shuffled copy of cards for the current quiz round
 let quizIndex     = 0;    // which question we are on (0-based)
 let quizScore     = 0;    // number of correct answers so far
 let quizMode      = "forward"; // "forward" = Chinese→English | "reverse" = English→Chinese
+var exploreMode   = "families"; // "families" or "sounds" — which sub-view is active
 
 
 // ---- THEMES -------------------------------------------------
@@ -247,16 +248,18 @@ function showImportMsg(text) {
 
 function switchTab(tab) {
   // Show only the requested section; hide the others.
-  document.getElementById("section-add").style.display    = (tab === "add")    ? "" : "none";
-  document.getElementById("section-review").style.display = (tab === "review") ? "" : "none";
-  document.getElementById("section-quiz").style.display   = (tab === "quiz")   ? "" : "none";
-  document.getElementById("section-decks").style.display  = (tab === "decks")  ? "" : "none";
+  document.getElementById("section-add").style.display     = (tab === "add")     ? "" : "none";
+  document.getElementById("section-review").style.display  = (tab === "review")  ? "" : "none";
+  document.getElementById("section-quiz").style.display    = (tab === "quiz")    ? "" : "none";
+  document.getElementById("section-decks").style.display   = (tab === "decks")   ? "" : "none";
+  document.getElementById("section-explore").style.display = (tab === "explore") ? "" : "none";
 
   // classList.toggle(class, bool) adds the class when bool is true, removes it when false.
-  document.getElementById("tab-add").classList.toggle("active",    tab === "add");
-  document.getElementById("tab-review").classList.toggle("active", tab === "review");
-  document.getElementById("tab-quiz").classList.toggle("active",   tab === "quiz");
-  document.getElementById("tab-decks").classList.toggle("active",  tab === "decks");
+  document.getElementById("tab-add").classList.toggle("active",     tab === "add");
+  document.getElementById("tab-review").classList.toggle("active",  tab === "review");
+  document.getElementById("tab-quiz").classList.toggle("active",    tab === "quiz");
+  document.getElementById("tab-decks").classList.toggle("active",   tab === "decks");
+  document.getElementById("tab-explore").classList.toggle("active", tab === "explore");
 
   if (tab === "add") {
     // If the user clicks the Add tab while an edit is in progress, cancel the edit cleanly.
@@ -272,6 +275,8 @@ function switchTab(tab) {
     renderQuizStart();
   } else if (tab === "decks") {
     renderDecks();
+  } else if (tab === "explore") {
+    renderExplore();
   }
 }
 
@@ -844,6 +849,183 @@ function loadDeck(id, btn) {
   }
   msg.style.display = "block";
   setTimeout(function() { msg.style.display = "none"; }, 3500);
+}
+
+
+// ---- EXPLORE ------------------------------------------------
+// Two sub-views inside the Explore tab:
+//   "families" → grid of character family tiles → detail view
+//   "sounds"   → grouped homophones (same pinyin + tone)
+// -------------------------------------------------------------
+
+function switchExplore(mode) {
+  exploreMode = mode;
+  document.getElementById("explore-btn-families").classList.toggle("active-explore", mode === "families");
+  document.getElementById("explore-btn-sounds").classList.toggle("active-explore",   mode === "sounds");
+  renderExplore();
+}
+
+function renderExplore() {
+  if (exploreMode === "families") {
+    renderFamilies();
+  } else {
+    renderSoundAlikes();
+  }
+}
+
+function renderFamilies() {
+  var content = document.getElementById("explore-content");
+  var html = '<div class="explore-grid">';
+  CHARACTER_FAMILIES.forEach(function(fam) {
+    var badge = fam.type === "phonetic"
+      ? '<span class="family-badge badge-phonetic">Phonetic</span>'
+      : '<span class="family-badge badge-semantic">Semantic</span>';
+    html +=
+      '<div class="family-tile" onclick="renderFamilyDetail(\'' + fam.id + '\')">' +
+        '<div class="family-tile-char">' + fam.component + '</div>' +
+        '<div class="family-tile-meaning">' + fam.componentMeaning + '</div>' +
+        '<div class="family-tile-count">' + fam.members.length + ' chars</div>' +
+        badge +
+      '</div>';
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function renderFamilyDetail(id) {
+  var fam = CHARACTER_FAMILIES.find(function(f) { return f.id === id; });
+  if (!fam) { return; }
+
+  var inDeck = new Set(cards.map(function(c) { return c.character; }));
+
+  var html =
+    '<button class="explore-back-btn" onclick="renderFamilies()">&#8592; Back</button>' +
+    '<div class="family-component-header">' +
+      '<div class="family-component-big">' + fam.component + '</div>' +
+      '<div class="family-tile-meaning">' + fam.componentPinyin + ' — ' + fam.componentMeaning + '</div>' +
+      '<div class="family-desc">' + fam.description + '</div>' +
+    '</div>' +
+    '<div class="member-grid">';
+
+  fam.members.forEach(function(m) {
+    var alreadyIn = inDeck.has(m.character);
+    var btnClass  = alreadyIn ? 'member-add-btn in-deck' : 'member-add-btn';
+    var btnLabel  = alreadyIn ? '&#10003; In deck' : '+ Add';
+    var btnExtra  = alreadyIn ? 'disabled' : '';
+    var tag = 'Family:' + fam.component;
+    html +=
+      '<div class="member-card">' +
+        '<div class="member-char">' + m.character + '</div>' +
+        '<div class="member-pinyin">' + m.pinyin + '</div>' +
+        '<div class="member-meaning">' + m.meaning + '</div>' +
+        '<button class="' + btnClass + '" ' + btnExtra + ' ' +
+          'onclick="addFromExplore(\'' + m.character.replace(/'/g, "\\'") + '\',\'' +
+            m.pinyin.replace(/'/g, "\\'") + '\',\'' +
+            m.meaning.replace(/'/g, "\\'") + '\',\'' +
+            tag.replace(/'/g, "\\'") + '\', this)">' +
+          btnLabel +
+        '</button>' +
+      '</div>';
+  });
+
+  html += '</div>';
+  document.getElementById("explore-content").innerHTML = html;
+}
+
+function renderSoundAlikes() {
+  // Build a master pool of {character, pinyin, meaning} from all CHARACTER_FAMILIES members,
+  // plus single-character entries from STARTER_DECKS, deduplicated by character.
+  var seen = new Set();
+  var pool = [];
+
+  CHARACTER_FAMILIES.forEach(function(fam) {
+    fam.members.forEach(function(m) {
+      if (!seen.has(m.character)) {
+        seen.add(m.character);
+        pool.push({ character: m.character, pinyin: m.pinyin, meaning: m.meaning });
+      }
+    });
+  });
+
+  STARTER_DECKS.forEach(function(deck) {
+    deck.cards.forEach(function(c) {
+      if (!seen.has(c.character)) {
+        seen.add(c.character);
+        pool.push({ character: c.character, pinyin: c.pinyin, meaning: c.meaning });
+      }
+    });
+  });
+
+  // Group by exact pinyin (includes tone mark, so shì ≠ shí ≠ shǐ etc.).
+  var groups = {};
+  pool.forEach(function(entry) {
+    var key = entry.pinyin.trim();
+    if (!groups[key]) { groups[key] = []; }
+    groups[key].push(entry);
+  });
+
+  // Keep only groups with 2+ members, then sort alphabetically by pinyin.
+  var homophones = Object.keys(groups)
+    .filter(function(k) { return groups[k].length >= 2; })
+    .sort()
+    .map(function(k) { return { pinyin: k, members: groups[k] }; });
+
+  var inDeck = new Set(cards.map(function(c) { return c.character; }));
+
+  if (homophones.length === 0) {
+    document.getElementById("explore-content").innerHTML =
+      '<p style="color:var(--color-muted);text-align:center;margin-top:40px;">No homophone groups found yet.</p>';
+    return;
+  }
+
+  var html = '';
+  homophones.forEach(function(group) {
+    html += '<div class="sound-group"><div class="sound-group-header">' + group.pinyin + '</div><div class="member-grid">';
+    group.members.forEach(function(m) {
+      var alreadyIn = inDeck.has(m.character);
+      var btnClass  = alreadyIn ? 'member-add-btn in-deck' : 'member-add-btn';
+      var btnLabel  = alreadyIn ? '&#10003; In deck' : '+ Add';
+      var btnExtra  = alreadyIn ? 'disabled' : '';
+      html +=
+        '<div class="member-card">' +
+          '<div class="member-char">' + m.character + '</div>' +
+          '<div class="member-pinyin">' + m.pinyin + '</div>' +
+          '<div class="member-meaning">' + m.meaning + '</div>' +
+          '<button class="' + btnClass + '" ' + btnExtra + ' ' +
+            'onclick="addFromExplore(\'' + m.character.replace(/'/g, "\\'") + '\',\'' +
+              m.pinyin.replace(/'/g, "\\'") + '\',\'' +
+              m.meaning.replace(/'/g, "\\'") + '\',\'Sounds\', this)">' +
+            btnLabel +
+          '</button>' +
+        '</div>';
+    });
+    html += '</div></div>';
+  });
+
+  document.getElementById("explore-content").innerHTML = html;
+}
+
+function addFromExplore(character, pinyin, meaning, tag, btn) {
+  // Guard: do nothing if the character is already in the deck.
+  if (cards.some(function(c) { return c.character === character; })) { return; }
+
+  cards.push({
+    character:  character,
+    pinyin:     pinyin,
+    meaning:    meaning,
+    tags:       [tag],
+    known:      false,
+    interval:   1,
+    nextReview: null
+  });
+  saveCards();
+
+  // Update the button in place — no full re-render needed.
+  if (btn) {
+    btn.textContent = '✓ In deck';
+    btn.disabled    = true;
+    btn.classList.add('in-deck');
+  }
 }
 
 

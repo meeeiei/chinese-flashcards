@@ -48,10 +48,11 @@
     The 'active' class on the first button means it's the default selected tab.
   -->
   <nav>
-    <button id="tab-add"    class="tab-btn active" onclick="switchTab('add')">Add Card</button>
-    <button id="tab-review" class="tab-btn"         onclick="switchTab('review')">Review Cards</button>
-    <button id="tab-quiz"   class="tab-btn"         onclick="switchTab('quiz')">Quiz</button>
-    <button id="tab-decks"  class="tab-btn"         onclick="switchTab('decks')">Decks</button>
+    <button id="tab-add"     class="tab-btn active" onclick="switchTab('add')">Add Card</button>
+    <button id="tab-review"  class="tab-btn"        onclick="switchTab('review')">Review Cards</button>
+    <button id="tab-quiz"    class="tab-btn"        onclick="switchTab('quiz')">Quiz</button>
+    <button id="tab-decks"   class="tab-btn"        onclick="switchTab('decks')">Decks</button>
+    <button id="tab-explore" class="tab-btn"        onclick="switchTab('explore')">Explore</button>
   </nav>
 
   <!-- ===================== ADD CARD SECTION ===================== -->
@@ -389,14 +390,28 @@
   </section>
 
 
+  <!-- ===================== EXPLORE SECTION ===================== -->
+  <section id="section-explore" style="display:none;">
+    <h2>Explore</h2>
+    <div class="explore-subnav">
+      <button id="explore-btn-families" class="explore-nav-btn active-explore"
+              onclick="switchExplore('families')">Character Families</button>
+      <button id="explore-btn-sounds"   class="explore-nav-btn"
+              onclick="switchExplore('sounds')">Sound-Alikes</button>
+    </div>
+    <div id="explore-content"></div>
+  </section>
+
+
   <!--
     The script tag goes at the very bottom of <body>.
     By the time the browser reaches this line, all the HTML above already exists,
     so app.js can safely find elements by their id.
   -->
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
+  <script src="families.js?v=1"></script>
   <script src="decks.js?v=1"></script>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 
   <!-- Theme switching lives here too so it always works regardless of app.js caching -->
   <script>
