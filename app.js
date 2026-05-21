@@ -53,6 +53,87 @@ function saveCards() {
 }
 
 
+// ---- EXPORT -------------------------------------------------
+// Converts the cards array to a JSON file and triggers a download.
+// No server needed — the browser creates a temporary URL for the data.
+// -------------------------------------------------------------
+
+function exportDeck() {
+  const json = JSON.stringify(cards, null, 2); // null, 2 = pretty-print with 2-space indent
+  const blob = new Blob([json], { type: "application/json" });
+  const url  = URL.createObjectURL(blob);
+
+  const a    = document.createElement("a");
+  a.href     = url;
+  a.download = "flashcards.json";
+  a.click();
+
+  URL.revokeObjectURL(url); // free the temporary URL immediately after triggering download
+}
+
+
+// ---- IMPORT -------------------------------------------------
+// Reads a .json file the user selects, parses it, and merges
+// the cards in — skipping any whose character already exists.
+// -------------------------------------------------------------
+
+function importDeck(event) {
+  const file = event.target.files[0];
+  if (!file) { return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    let imported;
+    try {
+      imported = JSON.parse(e.target.result);
+    } catch (err) {
+      showImportMsg("That file doesn't look like valid JSON. Try exporting a deck first.");
+      return;
+    }
+
+    if (!Array.isArray(imported)) {
+      showImportMsg("File format not recognised. Expected an array of cards.");
+      return;
+    }
+
+    const existing = new Set(cards.map(function(c) { return c.character; }));
+
+    let added = 0, skipped = 0;
+    imported.forEach(function(card) {
+      if (card.character && !existing.has(card.character)) {
+        cards.push({
+          character: card.character,
+          pinyin:    card.pinyin    || "",
+          meaning:   card.meaning   || "",
+          tags:      Array.isArray(card.tags) ? card.tags : [],
+          known:     card.known     || false
+        });
+        existing.add(card.character);
+        added++;
+      } else {
+        skipped++;
+      }
+    });
+
+    saveCards();
+    event.target.value = ""; // reset so the same file can be re-imported later
+
+    const msg = added + " card" + (added === 1 ? "" : "s") + " imported" +
+      (skipped > 0 ? ", " + skipped + " duplicate" + (skipped === 1 ? "" : "s") + " skipped" : "") + ".";
+    showImportMsg(msg);
+  };
+
+  reader.readAsText(file);
+}
+
+function showImportMsg(text) {
+  const el = document.getElementById("import-msg");
+  el.textContent   = text;
+  el.style.display = "block";
+  setTimeout(function() { el.style.display = "none"; }, 3000);
+}
+
+
 // ---- TAB SWITCHING ------------------------------------------
 // The app has two "screens": Add Card and Review Cards.
 // We fake navigation by showing one <section> and hiding the other.

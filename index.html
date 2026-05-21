@@ -122,6 +122,16 @@
       Card saved!
     </p>
 
+    <!-- Deck management: export and import -->
+    <div class="deck-bar">
+      <button class="btn-nav" onclick="exportDeck()">&#8595; Export Deck</button>
+      <label class="btn-nav deck-import-label">
+        &#8593; Import Deck
+        <input type="file" accept=".json" onchange="importDeck(event)" style="display:none;" />
+      </label>
+    </div>
+    <p id="import-msg" class="confirmation" style="display:none;"></p>
+
   </section>
 
 
