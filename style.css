@@ -25,6 +25,27 @@
   --radius: 10px;       /* border-radius used throughout */
   --shadow: 0 4px 24px rgba(26, 18, 8, 0.10);  /* subtle drop shadow */
   --max-width: 560px;   /* keeps content readable on wide screens */
+
+  /* colours that were previously hardcoded — now variables so themes can override them */
+  --color-focus-ring:     rgba(181, 37, 28, 0.12);
+  --color-on-accent:      #fff;
+  --color-success-bg:     #eaf5ea;
+  --color-success-border: #b2d8b2;
+  --color-success-text:   #2d6e2d;
+  --color-card-back:      #fdf6ee;
+  --color-know:           #2d6e2d;
+  --color-know-bg:        #eaf5ea;
+  --color-noyet-bg:       #fdecea;
+  --color-texture:        rgba(180, 140, 100, 0.06);
+
+  /* bear mascot colours */
+  --bear-body:   #c8956b;
+  --bear-tummy:  #e8c4a0;
+  --bear-inner:  #e8a888;
+  --bear-eye:    #1a1208;
+  --sign-bg:     var(--color-surface);
+  --sign-border: var(--color-border);
+  --sign-text:   var(--color-ink);
 }
 
 
@@ -51,8 +72,8 @@ body {
       0deg,
       transparent,
       transparent 31px,
-      rgba(180, 140, 100, 0.06) 31px,
-      rgba(180, 140, 100, 0.06) 32px
+      var(--color-texture) 31px,
+      var(--color-texture) 32px
     );
 }
 
@@ -196,7 +217,7 @@ input[type="text"] {
 
 input[type="text"]:focus {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px rgba(181, 37, 28, 0.12);
+  box-shadow: 0 0 0 3px var(--color-focus-ring);
 }
 
 /* The Chinese character field gets a larger, serif font */
@@ -248,7 +269,7 @@ input[type="text"]:focus {
 .btn-primary {
   padding: 13px 28px;
   background: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
   border: none;
   border-radius: 6px;
   font-family: var(--font-ui);
@@ -300,10 +321,10 @@ input[type="text"]:focus {
 .confirmation {
   margin-top: 16px;
   padding: 12px 18px;
-  background: #eaf5ea;
-  border: 1px solid #b2d8b2;
+  background: var(--color-success-bg);
+  border: 1px solid var(--color-success-border);
   border-radius: 6px;
-  color: #2d6e2d;
+  color: var(--color-success-text);
   font-size: 0.95rem;
   font-weight: 700;
 }
@@ -338,7 +359,7 @@ input[type="text"]:focus {
 .filter-btn.active-filter {
   background: var(--color-accent);
   border-color: var(--color-accent);
-  color: #fff;
+  color: var(--color-on-accent);
 }
 
 
@@ -416,7 +437,16 @@ input[type="text"]:focus {
 /* The back starts rotated 180deg so it's initially hidden */
 .card-back {
   transform: rotateY(180deg);
-  background: #fdf6ee;       /* slightly warmer tint to distinguish front from back */
+  background: var(--color-card-back);
+}
+
+.card-back-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius);
+  pointer-events: none;
 }
 
 .card-hint {
@@ -514,11 +544,11 @@ input[type="text"]:focus {
   transition: background 0.15s, color 0.15s, border-color 0.15s;
 }
 
-.btn-know:hover        { border-color: #2d6e2d; color: #2d6e2d; }
-.btn-know.active-know  { background: #eaf5ea; border-color: #2d6e2d; color: #2d6e2d; }
+.btn-know:hover        { border-color: var(--color-know); color: var(--color-know); }
+.btn-know.active-know  { background: var(--color-know-bg); border-color: var(--color-know); color: var(--color-know); }
 
 .btn-noyet:hover           { border-color: var(--color-accent); color: var(--color-accent); }
-.btn-noyet.active-noyet    { background: #fdecea; border-color: var(--color-accent); color: var(--color-accent); }
+.btn-noyet.active-noyet    { background: var(--color-noyet-bg); border-color: var(--color-accent); color: var(--color-accent); }
 
 
 /* ---- PROGRESS LINE -------------------------------------------- */
@@ -586,7 +616,7 @@ input[type="text"]:focus {
   margin-bottom: 10px;
 }
 
-.verdict-correct { color: #2d6e2d; }
+.verdict-correct { color: var(--color-know); }
 .verdict-wrong   { color: var(--color-accent); }
 
 .quiz-reveal {
@@ -630,4 +660,172 @@ input[type="text"]:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+
+/* ---- THEME PICKER -----------------------------------------
+   A row of small colour circles in the header.
+   Click one to switch the whole app's colour scheme instantly.
+   ------------------------------------------------------------ */
+#theme-picker {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.theme-swatch {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2.5px solid transparent;
+  cursor: pointer;
+  padding: 0;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.theme-swatch:hover {
+  transform: scale(1.2);
+}
+
+.theme-swatch.active-swatch {
+  border-color: var(--color-ink);
+}
+
+
+/* ---- BEAR MASCOT ------------------------------------------
+   Sits in the bottom-right corner of the card front.
+   Bobs gently; sign rocks independently.
+   ------------------------------------------------------------ */
+.bear-wrapper {
+  position: absolute;
+  bottom: 0;
+  right: 4px;
+  pointer-events: none;
+  animation: bear-bob 2.8s ease-in-out infinite;
+}
+
+.bear-svg {
+  width: 110px;
+  height: auto;
+  display: block;
+}
+
+@keyframes bear-bob {
+  0%, 100% { transform: translateY(0) rotate(0.5deg); }
+  50%       { transform: translateY(-7px) rotate(-0.5deg); }
+}
+
+.bear-sign-board {
+  transform-box: fill-box;
+  transform-origin: center bottom;
+  animation: sign-tilt 2.8s ease-in-out infinite;
+}
+
+@keyframes sign-tilt {
+  0%, 100% { transform: rotate(0deg); }
+  30%       { transform: rotate(-4deg); }
+  70%       { transform: rotate(4deg); }
+}
+
+/* Costumes: hidden by default, shown by active theme */
+.costume-ink,
+.costume-dark,
+.costume-neon,
+.costume-cute  { display: none; }
+
+[data-theme="ink"]  .costume-ink  { display: block; }
+[data-theme="dark"] .costume-dark { display: block; }
+[data-theme="neon"] .costume-neon { display: block; }
+[data-theme="cute"] .costume-cute { display: block; }
+
+
+/* =============================================================
+   THEMES
+   Each block only activates when <html data-theme="X">.
+   To add a new theme: copy one block, change the name,
+   and adjust the colour values.
+   ============================================================= */
+
+[data-theme="ink"] {
+  /* Intentionally empty — :root already defines Ink & Parchment */
+}
+
+[data-theme="dark"] {
+  --color-bg:             #1a1a2e;
+  --color-surface:        #22223b;
+  --color-accent:         #9d8cff;
+  --color-accent-hover:   #b8a9ff;
+  --color-ink:            #e8e6f0;
+  --color-muted:          #9491a8;
+  --color-border:         #3a3a5c;
+  --color-tag-bg:         #2d2d4a;
+  --color-focus-ring:     rgba(157, 140, 255, 0.20);
+  --color-on-accent:      #fff;
+  --color-success-bg:     #1e3a2f;
+  --color-success-border: #2d6e4a;
+  --color-success-text:   #6fcf97;
+  --color-card-back:      #252540;
+  --color-know:           #6fcf97;
+  --color-know-bg:        #1e3a2f;
+  --color-noyet-bg:       #3a1e2f;
+  --color-texture:        rgba(100, 100, 160, 0.04);
+  --shadow:               0 4px 24px rgba(0, 0, 0, 0.40);
+  --bear-body:            #5a4a8a;
+  --bear-tummy:           #7a6aaa;
+  --bear-inner:           #6a5a9a;
+  --bear-eye:             #e8e6f0;
+}
+
+[data-theme="neon"] {
+  --color-bg:             #0a0a0f;
+  --color-surface:        #111118;
+  --color-accent:         #00ffe7;
+  --color-accent-hover:   #00ccb8;
+  --color-ink:            #e0f8ff;
+  --color-muted:          #5af5d0;
+  --color-border:         #00ffe740;
+  --color-tag-bg:         #0d1f1e;
+  --color-focus-ring:     rgba(0, 255, 231, 0.25);
+  --color-on-accent:      #0a0a0f;
+  --color-success-bg:     #001a14;
+  --color-success-border: #00ffe7;
+  --color-success-text:   #00ffe7;
+  --color-card-back:      #0d1520;
+  --color-know:           #39ff14;
+  --color-know-bg:        #0a1f05;
+  --color-noyet-bg:       #1f0a14;
+  --color-texture:        rgba(0, 255, 200, 0.02);
+  --shadow:               0 4px 32px rgba(0, 255, 231, 0.12);
+  --radius:               4px;
+  --bear-body:            #1a2040;
+  --bear-tummy:           #2a3050;
+  --bear-inner:           #151830;
+  --bear-eye:             #00ffe7;
+}
+
+[data-theme="cute"] {
+  --color-bg:             #fef0f5;
+  --color-surface:        #fff5fa;
+  --color-accent:         #e87ea1;
+  --color-accent-hover:   #d4607f;
+  --color-ink:            #4a2040;
+  --color-muted:          #c09ab8;
+  --color-border:         #f0c8da;
+  --color-tag-bg:         #fde0ec;
+  --color-focus-ring:     rgba(232, 126, 161, 0.20);
+  --color-on-accent:      #fff;
+  --color-success-bg:     #f0fce8;
+  --color-success-border: #c8e6b0;
+  --color-success-text:   #5a8a3a;
+  --color-card-back:      #fff0f8;
+  --color-know:           #6ab04c;
+  --color-know-bg:        #f0fce8;
+  --color-noyet-bg:       #fce8f0;
+  --color-texture:        rgba(232, 126, 161, 0.04);
+  --shadow:               0 4px 24px rgba(200, 80, 120, 0.10);
+  --radius:               18px;
+  --bear-body:            #f4a7c0;
+  --bear-tummy:           #ffd6e7;
+  --bear-inner:           #f9c4d8;
+  --bear-eye:             #4a2040;
 }
