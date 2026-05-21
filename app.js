@@ -31,6 +31,111 @@ let quizScore     = 0;    // number of correct answers so far
 let quizMode      = "forward"; // "forward" = Chinese→English | "reverse" = English→Chinese
 
 
+// ---- THEMES -------------------------------------------------
+// setTheme(name) swaps the data-theme attribute on <html>.
+// CSS picks this up instantly — every var(--color-...) updates.
+// To add a new theme later:
+//   1. Add a [data-theme="X"] block in style.css
+//   2. Add one object to THEMES below
+//   3. Add one swatch button in index.html
+// -------------------------------------------------------------
+
+const THEMES = [
+  { name: "ink",  label: "Ink & Parchment" },
+  { name: "dark", label: "Dark Mode"        },
+  { name: "neon", label: "Neon Futuristic"  },
+  { name: "cute", label: "Cute Mode"        },
+];
+
+function setTheme(themeName) {
+  document.documentElement.setAttribute("data-theme", themeName);
+  localStorage.setItem("flashcards-theme", themeName);
+  document.querySelectorAll(".theme-swatch").forEach(function(btn) {
+    btn.classList.toggle("active-swatch", btn.dataset.themeName === themeName);
+  });
+}
+
+function loadTheme() {
+  var saved = localStorage.getItem("flashcards-theme") || "ink";
+  setTheme(saved);
+}
+
+
+// ---- CARD BACK PARTICLES ------------------------------------
+// Floating dots that drift upward on the card back.
+// Start when the card flips to the back; stop when it flips forward.
+// Colors are read from the active CSS theme automatically.
+// -------------------------------------------------------------
+
+var particleAnimId = null;
+
+function startCardParticles() {
+  var canvas = document.getElementById("card-back-canvas");
+  if (!canvas) return;
+  var ctx = canvas.getContext("2d");
+
+  canvas.width  = canvas.offsetWidth  || 400;
+  canvas.height = canvas.offsetHeight || 280;
+
+  var style  = getComputedStyle(document.documentElement);
+  var accent = style.getPropertyValue("--color-accent").trim();
+  var muted  = style.getPropertyValue("--color-muted").trim();
+
+  var particles = [];
+  for (var i = 0; i < 18; i++) {
+    particles.push({
+      x:         Math.random() * canvas.width,
+      y:         Math.random() * canvas.height,
+      r:         Math.random() * 2.5 + 0.8,
+      speed:     Math.random() * 0.5 + 0.15,
+      drift:     (Math.random() - 0.5) * 0.4,
+      alpha:     Math.random() * 0.5 + 0.1,
+      maxAlpha:  Math.random() * 0.35 + 0.15,
+      fadeSpeed: Math.random() * 0.004 + 0.002,
+      color:     i % 3 === 0 ? accent : muted,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(function(p) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.alpha;
+      ctx.fill();
+      p.y -= p.speed;
+      p.x += p.drift;
+      p.alpha -= p.fadeSpeed;
+      if (p.alpha <= 0 || p.y < -p.r) {
+        p.x     = Math.random() * canvas.width;
+        p.y     = canvas.height + p.r;
+        p.alpha = p.maxAlpha;
+        p.drift = (Math.random() - 0.5) * 0.4;
+        p.speed = Math.random() * 0.5 + 0.15;
+      }
+    });
+    ctx.globalAlpha = 1;
+    particleAnimId = requestAnimationFrame(draw);
+  }
+
+  stopCardParticles();
+  draw();
+}
+
+function stopCardParticles() {
+  if (particleAnimId) {
+    cancelAnimationFrame(particleAnimId);
+    particleAnimId = null;
+  }
+  var canvas = document.getElementById("card-back-canvas");
+  if (canvas) {
+    var ctx = canvas.getContext("2d");
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+}
+
+
 // ---- PERSISTENCE --------------------------------------------
 // localStorage is a tiny key-value store built into every browser.
 // It can only hold strings, so we convert our array using JSON:
@@ -362,6 +467,7 @@ function renderCard(index) {
 
   // Always start on the front face — remove .flipped if it was there.
   document.getElementById("card-inner").classList.remove("flipped");
+  stopCardParticles();
 
   // Reflect this card's known/not-yet state on the buttons and progress line.
   renderKnownButtons(card.known);
@@ -388,8 +494,13 @@ function renderTagPills(containerId, tags) {
 // -------------------------------------------------------------
 
 function flipCard() {
-  document.getElementById("card-inner").classList.toggle("flipped");
-  // .toggle adds the class if it is absent, removes it if it is present.
+  var inner = document.getElementById("card-inner");
+  inner.classList.toggle("flipped");
+  if (inner.classList.contains("flipped")) {
+    startCardParticles();
+  } else {
+    stopCardParticles();
+  }
 }
 
 
@@ -658,6 +769,7 @@ function nextQuestion() {
 // -------------------------------------------------------------
 
 loadCards();
+loadTheme();
 
 
 // ---- AUTO-PINYIN --------------------------------------------
