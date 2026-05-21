@@ -1,0 +1,618 @@
+/* =============================================================
+   CHINESE FLASHCARDS — style.css
+   Aesthetic: "Ink & Parchment" — warm, scholarly, culturally grounded
+   ============================================================= */
+
+
+/* ---- CSS VARIABLES ----------------------------------------
+   Define all colours and fonts in one place.
+   To change the whole colour scheme, edit only this block.
+   Usage elsewhere: var(--color-accent) instead of the raw value.
+   ------------------------------------------------------------ */
+:root {
+  --color-bg:        #f5f0e8;   /* warm cream parchment — the page background */
+  --color-surface:   #fffdf8;   /* near-white — card and form backgrounds */
+  --color-accent:    #b5251c;   /* deep vermilion — buttons, active states */
+  --color-accent-hover: #8c1a13;
+  --color-ink:       #1a1208;   /* near-black ink — primary text */
+  --color-muted:     #7a6a58;   /* warm grey — secondary text, hints */
+  --color-border:    #ddd5c5;   /* soft border colour */
+  --color-tag-bg:    #f0e8de;   /* tag pill background */
+
+  --font-ui:      'Lato', sans-serif;        /* all UI text */
+  --font-chinese: 'Noto Serif SC', serif;    /* Chinese characters */
+
+  --radius: 10px;       /* border-radius used throughout */
+  --shadow: 0 4px 24px rgba(26, 18, 8, 0.10);  /* subtle drop shadow */
+  --max-width: 560px;   /* keeps content readable on wide screens */
+}
+
+
+/* ---- BASE RESET -------------------------------------------
+   Browsers have their own default styles (margins, padding, box-sizing).
+   This block normalises them so we start from a clean slate.
+   ------------------------------------------------------------ */
+*, *::before, *::after {
+  box-sizing: border-box;   /* padding and border count inside the element's width, not outside */
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-ui);
+  background-color: var(--color-bg);
+  color: var(--color-ink);
+  min-height: 100vh;        /* at least as tall as the viewport */
+  padding: 0 16px 48px;     /* side padding + breathing room at bottom */
+
+  /* Subtle paper texture using a repeating gradient */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 31px,
+      rgba(180, 140, 100, 0.06) 31px,
+      rgba(180, 140, 100, 0.06) 32px
+    );
+}
+
+
+/* ---- HEADER -----------------------------------------------
+   The top banner with the app title.
+   ------------------------------------------------------------ */
+header {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 36px 0 20px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+header h1 {
+  font-family: var(--font-chinese);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-accent);
+  letter-spacing: 0.02em;
+}
+
+header h1 span {
+  /* The English subtitle next to the Chinese title */
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-left: 12px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+
+/* ---- NAVIGATION TABS --------------------------------------
+   Two buttons at the top to switch between Add and Review.
+   ------------------------------------------------------------ */
+nav {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  display: flex;             /* lay the two tab buttons side by side */
+  gap: 0;
+  padding-top: 8px;
+  border-bottom: 2px solid var(--color-border);
+}
+
+.tab-btn {
+  flex: 1;                   /* each tab takes equal width */
+  padding: 14px 0;
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;   /* invisible border, replaced when active */
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  margin-bottom: -2px;       /* overlap the nav border-bottom to hide it under the active tab */
+}
+
+.tab-btn:hover {
+  color: var(--color-ink);
+}
+
+.tab-btn.active {
+  color: var(--color-accent);
+  border-bottom-color: var(--color-accent);
+}
+
+
+/* ---- SECTIONS ---------------------------------------------
+   Both sections (#section-add and #section-review) share these base styles.
+   JavaScript shows/hides them by toggling display:none.
+   ------------------------------------------------------------ */
+section {
+  max-width: var(--max-width);
+  margin: 32px auto 0;
+}
+
+section h2 {
+  font-family: var(--font-chinese);
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--color-muted);
+  margin-bottom: 24px;
+  letter-spacing: 0.03em;
+}
+
+
+/* ---- FORM FIELDS ------------------------------------------
+   Each .field wraps a label + input pair.
+   ------------------------------------------------------------ */
+form {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 28px;
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;    /* stack the fields top to bottom */
+  gap: 20px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.field > label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+}
+
+.hint {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 0.8rem;
+  color: var(--color-muted);
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  background: var(--color-bg);
+  font-family: var(--font-ui);
+  font-size: 1rem;
+  color: var(--color-ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+input[type="text"]:focus {
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(181, 37, 28, 0.12);
+}
+
+/* The Chinese character field gets a larger, serif font */
+#input-character {
+  font-family: var(--font-chinese);
+  font-size: 1.4rem;
+}
+
+/* ---- CHECKBOXES -------------------------------------------
+   The tag checkboxes sit in a horizontal row.
+   ------------------------------------------------------------ */
+.checkbox-group {
+  display: flex;
+  flex-wrap: wrap;           /* wrap to next line if screen is narrow */
+  gap: 10px;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--color-tag-bg);
+  border: 1.5px solid var(--color-border);
+  border-radius: 20px;       /* pill shape */
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.checkbox-label:hover {
+  border-color: var(--color-accent);
+}
+
+.checkbox-label input[type="checkbox"] {
+  accent-color: var(--color-accent);  /* colours the checkmark itself */
+  width: 15px;
+  height: 15px;
+}
+
+
+/* ---- BUTTONS ----------------------------------------------
+   .btn-primary: the main "Add Card" submit button
+   .btn-nav: the Prev / Next navigation buttons in Review
+   .btn-delete: the red Delete button
+   ------------------------------------------------------------ */
+.btn-primary {
+  padding: 13px 28px;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.1s;
+  align-self: flex-start;    /* don't stretch to full width */
+}
+
+.btn-primary:hover  { background: var(--color-accent-hover); }
+.btn-primary:active { transform: scale(0.97); }
+
+.btn-nav {
+  padding: 10px 22px;
+  background: var(--color-surface);
+  color: var(--color-ink);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.btn-nav:hover { border-color: var(--color-accent); background: var(--color-tag-bg); }
+
+.btn-delete {
+  padding: 10px 18px;
+  background: none;
+  color: var(--color-muted);
+  border: 1.5px solid var(--color-border);
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+}
+
+.btn-delete:hover { color: var(--color-accent); border-color: var(--color-accent); }
+
+
+/* ---- CONFIRMATION MESSAGE ----------------------------------
+   Brief "Card saved!" message shown after adding a card.
+   ------------------------------------------------------------ */
+.confirmation {
+  margin-top: 16px;
+  padding: 12px 18px;
+  background: #eaf5ea;
+  border: 1px solid #b2d8b2;
+  border-radius: 6px;
+  color: #2d6e2d;
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+
+/* ---- FILTER BAR -------------------------------------------
+   The row of tag-filter buttons above the card in Review mode.
+   app.js creates these buttons dynamically and inserts them here.
+   ------------------------------------------------------------ */
+#filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.filter-btn {
+  padding: 7px 16px;
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: 20px;
+  font-family: var(--font-ui);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  color: var(--color-muted);
+}
+
+.filter-btn:hover       { border-color: var(--color-accent); color: var(--color-accent); }
+.filter-btn.active-filter {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+
+
+/* ---- EMPTY MESSAGE ---------------------------------------- */
+#empty-message {
+  color: var(--color-muted);
+  font-size: 1rem;
+  text-align: center;
+  margin-top: 40px;
+  line-height: 1.6;
+}
+
+
+/* =============================================================
+   THE FLASHCARD FLIP ANIMATION
+   This is the most complex part of the CSS. Here's the logic:
+
+   1. .card is the outer container. It has a fixed size and
+      'perspective' which gives the 3D depth effect.
+
+   2. .card-inner is the piece that physically rotates.
+      It holds both the front and back faces.
+      When JavaScript adds the class 'flipped', it rotates 180deg.
+
+   3. .card-front and .card-back are stacked on top of each other
+      (position:absolute, same size). The back starts pre-rotated
+      180deg so it's facing away from you — invisible.
+      'backface-visibility:hidden' hides each face when it's
+      rotated away from the viewer.
+
+   4. The 'transition' on .card-inner makes the rotation animate
+      smoothly over 0.6 seconds instead of snapping.
+   ============================================================= */
+
+.card {
+  perspective: 1200px;       /* how "deep" the 3D space feels; larger = more subtle */
+  width: 100%;
+  height: 280px;
+  cursor: pointer;
+  margin-bottom: 16px;
+}
+
+.card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;    /* children are in 3D space, not flattened */
+  transition: transform 0.6s cubic-bezier(0.4, 0.2, 0.2, 1);
+}
+
+/* When JavaScript toggles this class, the rotation happens */
+.card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front,
+.card-back {
+  position: absolute;        /* both faces occupy the same space */
+  inset: 0;                  /* shorthand for top:0, right:0, bottom:0, left:0 */
+  border-radius: var(--radius);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow);
+  backface-visibility: hidden;   /* hide this face when it's rotated away */
+  -webkit-backface-visibility: hidden;  /* Safari compatibility */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  text-align: center;
+  gap: 10px;
+}
+
+/* The back starts rotated 180deg so it's initially hidden */
+.card-back {
+  transform: rotateY(180deg);
+  background: #fdf6ee;       /* slightly warmer tint to distinguish front from back */
+}
+
+.card-hint {
+  font-size: 0.75rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 700;
+  position: absolute;
+  top: 20px;
+}
+
+.card-character {
+  font-family: var(--font-chinese);
+  font-size: 3.5rem;           /* large and prominent */
+  font-weight: 700;
+  color: var(--color-ink);
+  line-height: 1.2;
+}
+
+.card-pinyin {
+  font-size: 1.2rem;
+  color: var(--color-muted);
+  letter-spacing: 0.04em;
+  margin-top: 4px;
+}
+
+.card-meaning {
+  font-family: var(--font-chinese);
+  font-size: 2rem;
+  font-weight: 400;
+  color: var(--color-accent);
+  line-height: 1.3;
+}
+
+/* Tag pills displayed on the card face */
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  position: absolute;
+  bottom: 18px;
+}
+
+.tag-pill {
+  padding: 3px 10px;
+  background: var(--color-tag-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 20px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--color-muted);
+}
+
+
+/* ---- CARD COUNTER & CONTROLS ------------------------------ */
+.card-counter {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 14px;
+}
+
+.card-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+}
+
+
+/* ---- KNOW-IT / NOT-YET BUTTONS -------------------------------- */
+.know-controls {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.btn-know,
+.btn-noyet {
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  border: 1.5px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-muted);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.btn-know:hover        { border-color: #2d6e2d; color: #2d6e2d; }
+.btn-know.active-know  { background: #eaf5ea; border-color: #2d6e2d; color: #2d6e2d; }
+
+.btn-noyet:hover           { border-color: var(--color-accent); color: var(--color-accent); }
+.btn-noyet.active-noyet    { background: #fdecea; border-color: var(--color-accent); color: var(--color-accent); }
+
+
+/* ---- PROGRESS LINE -------------------------------------------- */
+.progress-line {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--color-muted);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-top: 10px;
+}
+
+
+/* ---- SPEAKER BUTTON ------------------------------------------ */
+.btn-speak {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 1.5px solid var(--color-border);
+  background: none;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.btn-speak:hover { border-color: var(--color-accent); color: var(--color-accent); }
+
+
+/* ---- QUIZ ---------------------------------------------------- */
+.quiz-start-msg {
+  color: var(--color-muted);
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+.quiz-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 40px 32px;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+.quiz-form {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.quiz-form input[type="text"] { flex: 1; }
+
+.quiz-verdict {
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+}
+
+.verdict-correct { color: #2d6e2d; }
+.verdict-wrong   { color: var(--color-accent); }
+
+.quiz-reveal {
+  color: var(--color-muted);
+  font-size: 1rem;
+  margin-bottom: 20px;
+}
+
+.quiz-score {
+  font-family: var(--font-chinese);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--color-ink);
+  text-align: center;
+}
+
+.quiz-direction {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.quiz-meaning-display {
+  font-size: 1.2rem;
+  color: var(--color-ink);
+  text-align: center;
+  padding: 8px 0;
+  line-height: 1.5;
+}

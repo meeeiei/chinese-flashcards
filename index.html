@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<!--
+  DOCTYPE tells the browser: "this is modern HTML5".
+  Without it, browsers fall back to quirky old behaviour.
+-->
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <!--
+    charset="UTF-8" lets the browser display Chinese characters correctly.
+    Without this, 你好 might show as garbled symbols.
+  -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- viewport makes the page look right on phones, not zoomed-out tiny -->
+
+  <title>Chinese Flashcards</title>
+
+  <!--
+    We load two fonts from Google Fonts (requires internet connection):
+    - Lato: clean, readable sans-serif for all UI text
+    - Noto Serif SC: a serif font designed specifically for Chinese characters
+  -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- Our own CSS file for all visual styling -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+
+  <!-- ===================== HEADER ===================== -->
+  <header>
+    <h1>汉字卡片 <span>Chinese Flashcards</span></h1>
+  </header>
+
+  <!-- ===================== NAVIGATION TABS ===================== -->
+  <!--
+    Two buttons that switch between the two "screens" of the app.
+    onclick calls switchTab() in app.js with either 'add' or 'review'.
+    The 'active' class on the first button means it's the default selected tab.
+  -->
+  <nav>
+    <button id="tab-add"    class="tab-btn active" onclick="switchTab('add')">Add Card</button>
+    <button id="tab-review" class="tab-btn"         onclick="switchTab('review')">Review Cards</button>
+    <button id="tab-quiz"   class="tab-btn"         onclick="switchTab('quiz')">Quiz</button>
+  </nav>
+
+  <!-- ===================== ADD CARD SECTION ===================== -->
+  <!--
+    This section is visible by default. app.js hides it when you click "Review Cards".
+  -->
+  <section id="section-add">
+
+    <h2 id="add-heading">Add a New Card</h2>
+
+    <!--
+      A <form> groups related inputs together.
+      onsubmit="addCard(event)" means: when the user clicks Submit,
+      run the addCard() function in app.js and pass it the form event.
+    -->
+    <form onsubmit="addCard(event)">
+
+      <!-- Chinese Character field -->
+      <div class="field">
+        <label for="input-character">Chinese Character(s)</label>
+        <input
+          type="text"
+          id="input-character"
+          placeholder="e.g. 你好"
+          required
+        />
+        <!--
+          'required' means the browser won't submit the form if this is empty.
+          'placeholder' shows hint text that disappears when you start typing.
+          'for' on the label links it to 'id' on the input — clicking the label focuses the box.
+        -->
+      </div>
+
+      <!-- Pinyin field -->
+      <div class="field">
+        <label for="input-pinyin">Pinyin</label>
+        <input
+          type="text"
+          id="input-pinyin"
+          placeholder="e.g. nǐ hǎo"
+          required
+        />
+      </div>
+
+      <!-- English Meaning field -->
+      <div class="field">
+        <label for="input-meaning">English Meaning</label>
+        <input
+          type="text"
+          id="input-meaning"
+          placeholder="e.g. hello / how are you"
+          required
+        />
+      </div>
+
+      <!-- Tags (checkboxes + free-text new tag) -->
+      <div class="field">
+        <label>Tags <span class="hint">(check existing · or type a new one below)</span></label>
+        <div id="tag-checkboxes" class="checkbox-group">
+          <!-- populated by renderTagCheckboxes() each time the Add tab opens -->
+        </div>
+        <input
+          type="text"
+          id="input-new-tag"
+          placeholder="New tag (e.g. Numbers, Colours…)"
+        />
+      </div>
+
+      <button type="submit" id="submit-btn" class="btn-primary">Add Card</button>
+
+    </form>
+
+    <!-- This paragraph is hidden by default; app.js shows it briefly after a card is saved -->
+    <p id="add-confirmation" class="confirmation" style="display:none;">
+      Card saved!
+    </p>
+
+  </section>
+
+
+  <!-- ===================== REVIEW CARDS SECTION ===================== -->
+  <!--
+    Hidden by default. app.js shows this when you click "Review Cards".
+  -->
+  <section id="section-review" style="display:none;">
+
+    <h2>Review Cards</h2>
+
+    <!-- Tag filter buttons — app.js populates these dynamically -->
+    <div id="filter-bar">
+      <!--
+        These buttons are created and inserted by app.js (renderFilterButtons).
+        We just provide the container here.
+      -->
+    </div>
+
+    <!-- Empty-deck message, shown when there are no cards to display -->
+    <p id="empty-message" style="display:none;">
+      No cards yet. Go to "Add Card" to create your first one!
+    </p>
+
+    <!-- ---- THE FLASHCARD ---- -->
+    <!--
+      This is the flip card structure:
+        .card          → outer fixed-size box (clips the animation)
+        .card-inner    → the piece that actually rotates 180 degrees
+        .card-front    → what you see first (character + pinyin)
+        .card-back     → what is revealed after flip (meaning)
+
+      onclick="flipCard()" in app.js toggles the .flipped CSS class,
+      which triggers the CSS rotation animation in style.css.
+    -->
+    <div id="card-area" style="display:none;">
+
+      <div class="card" onclick="flipCard()">
+        <div class="card-inner" id="card-inner">
+
+          <div class="card-front">
+            <p class="card-hint">tap to reveal meaning</p>
+            <button class="btn-speak" onclick="speakCard(event)" title="Hear pronunciation">&#128266;</button>
+            <p class="card-character" id="card-character">你好</p>
+            <p class="card-pinyin"   id="card-pinyin">nǐ hǎo</p>
+            <div class="card-tags"   id="card-tags-front"></div>
+          </div>
+
+          <div class="card-back">
+            <p class="card-hint">meaning</p>
+            <p class="card-meaning" id="card-meaning">hello</p>
+            <div class="card-tags"  id="card-tags-back"></div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Card counter (e.g. "Card 2 of 7") -->
+      <p id="card-counter" class="card-counter">Card 1 of 1</p>
+
+      <!-- Navigation and delete controls -->
+      <div class="card-controls">
+        <button class="btn-nav"    onclick="prevCard()">&#8592; Prev</button>
+        <button class="btn-delete" onclick="editCard()">Edit</button>
+        <button class="btn-delete" onclick="deleteCard()">Delete</button>
+        <button class="btn-nav"    onclick="nextCard()">Next &#8594;</button>
+      </div>
+
+      <!-- Know-it / Not-yet buttons -->
+      <div class="know-controls">
+        <button class="btn-noyet" id="btn-noyet" onclick="markKnown(false)">&#10007; Not yet</button>
+        <button class="btn-know"  id="btn-know"  onclick="markKnown(true)">&#10003; Know it</button>
+      </div>
+
+      <!-- Live progress counter -->
+      <p id="progress-line" class="progress-line"></p>
+
+    </div>
+
+  </section>
+
+
+  <!-- ===================== QUIZ SECTION ===================== -->
+  <section id="section-quiz" style="display:none;">
+
+    <h2>Quiz</h2>
+
+    <!-- Start screen -->
+    <div id="quiz-start">
+      <p id="quiz-start-msg" class="quiz-start-msg"></p>
+      <div id="quiz-direction" class="quiz-direction">
+        <button id="dir-forward" class="filter-btn active-filter"
+                onclick="setQuizMode('forward')">Chinese &#8594; English</button>
+        <button id="dir-reverse" class="filter-btn"
+                onclick="setQuizMode('reverse')">English &#8594; Chinese</button>
+      </div>
+      <button class="btn-primary" onclick="startQuiz()">Start Quiz &#8594;</button>
+    </div>
+
+    <!-- Question screen: shows character + pinyin, hides meaning -->
+    <div id="quiz-question" style="display:none;">
+      <p id="quiz-counter" class="card-counter"></p>
+      <div class="quiz-card">
+        <p class="card-character" id="quiz-character"></p>
+        <p class="card-pinyin"    id="quiz-pinyin"></p>
+      </div>
+      <p id="quiz-meaning" class="quiz-meaning-display"></p>
+      <button id="quiz-reveal-btn" class="btn-primary"
+              onclick="revealAnswer()" style="display:none;">Show Answer</button>
+      <form id="quiz-forward-form" class="quiz-form" onsubmit="submitAnswer(event)">
+        <input type="text" id="quiz-answer"
+               placeholder="Type the English meaning…"
+               autocomplete="off" required />
+        <button type="submit" class="btn-primary">Check &#10003;</button>
+      </form>
+    </div>
+
+    <!-- Feedback screen: shown after each answer -->
+    <div id="quiz-feedback" style="display:none;">
+      <p id="quiz-verdict" class="quiz-verdict"></p>
+      <p id="quiz-reveal"  class="quiz-reveal"></p>
+      <button id="quiz-next-btn" class="btn-nav" onclick="nextQuestion()">Next &#8594;</button>
+      <div id="quiz-self-report" class="know-controls" style="display:none;">
+        <button class="btn-noyet" onclick="selfReport(false)">&#10007; Didn't get it</button>
+        <button class="btn-know"  onclick="selfReport(true)">&#10003; Got it</button>
+      </div>
+    </div>
+
+    <!-- Done screen: shown after all cards are answered -->
+    <div id="quiz-done" style="display:none;">
+      <p id="quiz-score" class="quiz-score"></p>
+      <div class="card-controls" style="margin-top:24px;">
+        <button class="btn-nav" onclick="startQuiz()">Try Again</button>
+        <button class="btn-nav" onclick="switchTab('review')">Back to Review</button>
+      </div>
+    </div>
+
+  </section>
+
+
+  <!--
+    The script tag goes at the very bottom of <body>.
+    By the time the browser reaches this line, all the HTML above already exists,
+    so app.js can safely find elements by their id.
+  -->
+  <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
+  <script src="app.js"></script>
+
+</body>
+</html>
