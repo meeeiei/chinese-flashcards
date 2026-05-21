@@ -829,3 +829,61 @@ input[type="text"]:focus {
   --bear-inner:           #f9c4d8;
   --bear-eye:             #4a2040;
 }
+
+
+/* ---- STARTER DECKS ---------------------------------------- */
+.decks-intro {
+  text-align: center;
+  color: var(--color-muted);
+  margin: 0 0 20px;
+  font-size: 0.9rem;
+}
+
+#decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 14px;
+  padding: 0 4px 8px;
+}
+
+.deck-tile {
+  background: var(--color-surface);
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 12px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  text-align: center;
+}
+
+.deck-tile-name {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--color-ink);
+}
+
+.deck-tile-desc {
+  font-size: 0.78rem;
+  color: var(--color-muted);
+  flex: 1;
+  line-height: 1.35;
+}
+
+.deck-tile-count {
+  font-size: 0.8rem;
+  color: var(--color-accent);
+  font-weight: 700;
+}
+
+.deck-load-btn {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  padding: 7px 10px;
+}
+
+.deck-loaded-btn {
+  background: var(--color-know) !important;
+  cursor: default;
+  opacity: 0.85;
+}

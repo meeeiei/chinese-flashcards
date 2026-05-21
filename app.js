@@ -246,15 +246,17 @@ function showImportMsg(text) {
 // -------------------------------------------------------------
 
 function switchTab(tab) {
-  // Show only the requested section; hide the other two.
+  // Show only the requested section; hide the others.
   document.getElementById("section-add").style.display    = (tab === "add")    ? "" : "none";
   document.getElementById("section-review").style.display = (tab === "review") ? "" : "none";
   document.getElementById("section-quiz").style.display   = (tab === "quiz")   ? "" : "none";
+  document.getElementById("section-decks").style.display  = (tab === "decks")  ? "" : "none";
 
   // classList.toggle(class, bool) adds the class when bool is true, removes it when false.
   document.getElementById("tab-add").classList.toggle("active",    tab === "add");
   document.getElementById("tab-review").classList.toggle("active", tab === "review");
   document.getElementById("tab-quiz").classList.toggle("active",   tab === "quiz");
+  document.getElementById("tab-decks").classList.toggle("active",  tab === "decks");
 
   if (tab === "add") {
     // If the user clicks the Add tab while an edit is in progress, cancel the edit cleanly.
@@ -268,6 +270,8 @@ function switchTab(tab) {
     renderReview();
   } else if (tab === "quiz") {
     renderQuizStart();
+  } else if (tab === "decks") {
+    renderDecks();
   }
 }
 
@@ -758,6 +762,88 @@ function nextQuestion() {
       "You got " + quizScore + " / " + quizCards.length + " correct!";
     showQuizScreen("quiz-done");
   }
+}
+
+
+// ---- STARTER DECKS ------------------------------------------
+// renderDecks() builds the tile grid from STARTER_DECKS (in decks.js).
+// loadDeck(id) adds all cards from one deck to localStorage,
+// skipping any character that already exists in the user's collection.
+// -------------------------------------------------------------
+
+function renderDecks() {
+  var grid = document.getElementById("decks-grid");
+  grid.innerHTML = "";
+
+  // Build the set of characters the user already has so we can pre-mark loaded decks.
+  var existing = new Set(cards.map(function(c) { return c.character; }));
+
+  STARTER_DECKS.forEach(function(deck) {
+    var tile = document.createElement("div");
+    tile.className = "deck-tile";
+
+    // A deck is "already loaded" if every one of its characters is in the collection.
+    var allLoaded = deck.cards.every(function(c) { return existing.has(c.character); });
+
+    var btnHtml = allLoaded
+      ? '<button class="btn-primary deck-load-btn deck-loaded-btn" disabled>' +
+          '&#10003; Loaded</button>'
+      : '<button class="btn-primary deck-load-btn" ' +
+          'onclick="loadDeck(\'' + deck.id + '\', this)">Load Deck</button>';
+
+    tile.innerHTML =
+      '<div class="deck-tile-name">' + deck.name + '</div>' +
+      '<div class="deck-tile-desc">' + deck.description + '</div>' +
+      '<div class="deck-tile-count">' + deck.cards.length + ' words</div>' +
+      btnHtml;
+
+    grid.appendChild(tile);
+  });
+}
+
+function loadDeck(id, btn) {
+  // Find the deck by its id string.
+  var deck = STARTER_DECKS.find(function(d) { return d.id === id; });
+  if (!deck) { return; }
+
+  // Build a Set of characters already in the user's collection so we can skip duplicates.
+  var existing = new Set(cards.map(function(c) { return c.character; }));
+
+  var added = 0;
+  deck.cards.forEach(function(c) {
+    if (!existing.has(c.character)) {
+      cards.push({
+        character:  c.character,
+        pinyin:     c.pinyin,
+        meaning:    c.meaning,
+        tags:       [deck.tag],
+        known:      false,
+        interval:   1,
+        nextReview: null
+      });
+      existing.add(c.character);
+      added++;
+    }
+  });
+
+  saveCards();
+
+  // Update the button immediately so the user sees feedback right away.
+  if (btn) {
+    btn.textContent = "✓ Loaded";
+    btn.disabled = true;
+    btn.classList.add("deck-loaded-btn");
+  }
+
+  // Also show a brief toast message at the bottom of the section.
+  var msg = document.getElementById("deck-load-msg");
+  if (added > 0) {
+    msg.textContent = added + " card" + (added === 1 ? "" : "s") + " added from \"" + deck.name + "\"!";
+  } else {
+    msg.textContent = "All cards from \"" + deck.name + "\" are already in your collection.";
+  }
+  msg.style.display = "block";
+  setTimeout(function() { msg.style.display = "none"; }, 3500);
 }
 
 

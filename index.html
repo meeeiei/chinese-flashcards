@@ -51,6 +51,7 @@
     <button id="tab-add"    class="tab-btn active" onclick="switchTab('add')">Add Card</button>
     <button id="tab-review" class="tab-btn"         onclick="switchTab('review')">Review Cards</button>
     <button id="tab-quiz"   class="tab-btn"         onclick="switchTab('quiz')">Quiz</button>
+    <button id="tab-decks"  class="tab-btn"         onclick="switchTab('decks')">Decks</button>
   </nav>
 
   <!-- ===================== ADD CARD SECTION ===================== -->
@@ -379,12 +380,22 @@
   </section>
 
 
+  <!-- ===================== STARTER DECKS SECTION ===================== -->
+  <section id="section-decks" style="display:none;">
+    <h2>Starter Decks</h2>
+    <p class="decks-intro">Pick a deck and tap "Load" to add all its cards to your collection.</p>
+    <div id="decks-grid"></div>
+    <p id="deck-load-msg" class="confirmation" style="display:none;"></p>
+  </section>
+
+
   <!--
     The script tag goes at the very bottom of <body>.
     By the time the browser reaches this line, all the HTML above already exists,
     so app.js can safely find elements by their id.
   -->
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
+  <script src="decks.js?v=1"></script>
   <script src="app.js?v=2"></script>
 
   <!-- Theme switching lives here too so it always works regardless of app.js caching -->
