@@ -235,7 +235,7 @@ function addCard(event) {
     // Add mode: push a brand-new card.
     // { character, pinyin, meaning, tags } is shorthand for
     // { character: character, pinyin: pinyin, ... }
-    cards.push({ character, pinyin, meaning, tags, known: false });
+    cards.push({ character, pinyin, meaning, tags, known: false, interval: 1, nextReview: null });
     saveCards();
     event.target.reset();
     // Show the "Card saved!" confirmation for 2 seconds, then hide it.
@@ -266,7 +266,11 @@ function renderFilterButtons() {
   });
 
   // Put "All" first, then every unique tag in the order they were added.
-  const allTags = ["All"].concat(Array.from(tagSet));
+  const today    = new Date().toISOString().slice(0, 10);
+  const dueCount = cards.filter(function(c) {
+    return !c.nextReview || c.nextReview <= today;
+  }).length;
+  const allTags = ["All", "Due Today (" + dueCount + ")"].concat(Array.from(tagSet));
 
   // Create one <button> per tag and add it to the filter bar.
   allTags.forEach(function(tag) {
@@ -301,12 +305,15 @@ function renderReview() {
   // Apply the active filter to decide which cards to show.
   if (activeFilter === "All") {
     filteredCards = cards; // show everything
+  } else if (activeFilter.startsWith("Due Today")) {
+    const today = new Date().toISOString().slice(0, 10);
+    filteredCards = cards.filter(function(card) {
+      return !card.nextReview || card.nextReview <= today;
+    });
   } else {
     filteredCards = cards.filter(function(card) {
       return card.tags.includes(activeFilter);
     });
-    // .filter returns a new array containing only the cards
-    // whose tags array includes the activeFilter string.
   }
 
   const emptyMsg = document.getElementById("empty-message");
@@ -490,10 +497,23 @@ function markKnown(isKnown) {
   const realIndex = cards.indexOf(cardToUpdate);
   if (realIndex !== -1) {
     cards[realIndex].known = isKnown;
+    updateSpacedRepetition(cards[realIndex], isKnown);
     saveCards();
   }
-  renderKnownButtons(isKnown);
-  renderProgress();
+  renderReview();
+}
+
+// Schedules the card's next review based on whether the user knew it.
+// Know it → interval doubles (caps at 60 days). Not yet → resets to 1 day.
+function updateSpacedRepetition(card, knew) {
+  if (knew) {
+    card.interval = Math.min((card.interval || 1) * 2, 60);
+  } else {
+    card.interval = 1;
+  }
+  const next = new Date();
+  next.setDate(next.getDate() + card.interval);
+  card.nextReview = next.toISOString().slice(0, 10);
 }
 
 // Highlights whichever button matches the card's current state.
