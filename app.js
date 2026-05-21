@@ -379,12 +379,21 @@ function renderFilterButtons() {
     card.tags.forEach(function(tag) { tagSet.add(tag); });
   });
 
-  // Put "All" first, then every unique tag in the order they were added.
+  // Put "All" and "Due Today" first, then tags sorted so HSK 1-6 come next in level
+  // order, followed by all other tags alphabetically.
   const today    = new Date().toISOString().slice(0, 10);
   const dueCount = cards.filter(function(c) {
     return !c.nextReview || c.nextReview <= today;
   }).length;
-  const allTags = ["All", "Due Today (" + dueCount + ")"].concat(Array.from(tagSet));
+  const sortedTags = Array.from(tagSet).sort(function(a, b) {
+    var aHsk = a.match(/^HSK\s*(\d)/i);
+    var bHsk = b.match(/^HSK\s*(\d)/i);
+    if (aHsk && bHsk) { return parseInt(aHsk[1]) - parseInt(bHsk[1]); }
+    if (aHsk) { return -1; }
+    if (bHsk) { return  1; }
+    return a.localeCompare(b);
+  });
+  const allTags = ["All", "Due Today (" + dueCount + ")"].concat(sortedTags);
 
   // Create one <button> per tag and add it to the filter bar.
   allTags.forEach(function(tag) {
@@ -783,7 +792,14 @@ function renderDecks() {
   // Build the set of characters the user already has so we can pre-mark loaded decks.
   var existing = new Set(cards.map(function(c) { return c.character; }));
 
-  STARTER_DECKS.forEach(function(deck) {
+  // Sort so HSK 1-6 always appear first (in level order), then thematic decks.
+  var sorted = STARTER_DECKS.slice().sort(function(a, b) {
+    var aNum = a.id.startsWith("hsk") ? parseInt(a.id.slice(3)) : Infinity;
+    var bNum = b.id.startsWith("hsk") ? parseInt(b.id.slice(3)) : Infinity;
+    return aNum - bNum;
+  });
+
+  sorted.forEach(function(deck) {
     var tile = document.createElement("div");
     tile.className = "deck-tile";
 
