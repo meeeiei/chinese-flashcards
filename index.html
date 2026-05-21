@@ -387,5 +387,21 @@
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
   <script src="app.js?v=2"></script>
 
+  <!-- Theme switching lives here too so it always works regardless of app.js caching -->
+  <script>
+    function setTheme(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      try { localStorage.setItem("flashcards-theme", t); } catch(e) {}
+      document.querySelectorAll(".theme-swatch").forEach(function(b) {
+        b.classList.toggle("active-swatch", b.dataset.themeName === t);
+      });
+    }
+    (function() {
+      var saved = "";
+      try { saved = localStorage.getItem("flashcards-theme") || "ink"; } catch(e) { saved = "ink"; }
+      setTheme(saved);
+    })();
+  </script>
+
 </body>
 </html>
