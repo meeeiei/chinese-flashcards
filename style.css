@@ -733,10 +733,10 @@ input[type="text"]:focus {
 .costume-neon,
 .costume-cute  { display: none; }
 
-[data-theme="ink"]  .costume-ink  { display: block; }
-[data-theme="dark"] .costume-dark { display: block; }
-[data-theme="neon"] .costume-neon { display: block; }
-[data-theme="cute"] .costume-cute { display: block; }
+:root[data-theme="ink"]  .costume-ink  { display: block; }
+:root[data-theme="dark"] .costume-dark { display: block; }
+:root[data-theme="neon"] .costume-neon { display: block; }
+:root[data-theme="cute"] .costume-cute { display: block; }
 
 
 /* =============================================================
@@ -746,11 +746,11 @@ input[type="text"]:focus {
    and adjust the colour values.
    ============================================================= */
 
-[data-theme="ink"] {
+:root[data-theme="ink"] {
   /* Intentionally empty — :root already defines Ink & Parchment */
 }
 
-[data-theme="dark"] {
+:root[data-theme="dark"] {
   --color-bg:             #1a1a2e;
   --color-surface:        #22223b;
   --color-accent:         #9d8cff;
@@ -776,7 +776,7 @@ input[type="text"]:focus {
   --bear-eye:             #e8e6f0;
 }
 
-[data-theme="neon"] {
+:root[data-theme="neon"] {
   --color-bg:             #0a0a0f;
   --color-surface:        #111118;
   --color-accent:         #00ffe7;
@@ -803,7 +803,7 @@ input[type="text"]:focus {
   --bear-eye:             #00ffe7;
 }
 
-[data-theme="cute"] {
+:root[data-theme="cute"] {
   --color-bg:             #fef0f5;
   --color-surface:        #fff5fa;
   --color-accent:         #e87ea1;
