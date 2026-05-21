@@ -949,54 +949,16 @@ function renderFamilyDetail(id) {
 }
 
 function renderSoundAlikes() {
-  // Build a master pool of {character, pinyin, meaning} from all CHARACTER_FAMILIES members,
-  // plus single-character entries from STARTER_DECKS, deduplicated by character.
-  var seen = new Set();
-  var pool = [];
-
-  CHARACTER_FAMILIES.forEach(function(fam) {
-    fam.members.forEach(function(m) {
-      if (!seen.has(m.character)) {
-        seen.add(m.character);
-        pool.push({ character: m.character, pinyin: m.pinyin, meaning: m.meaning });
-      }
-    });
-  });
-
-  STARTER_DECKS.forEach(function(deck) {
-    deck.cards.forEach(function(c) {
-      if (!seen.has(c.character)) {
-        seen.add(c.character);
-        pool.push({ character: c.character, pinyin: c.pinyin, meaning: c.meaning });
-      }
-    });
-  });
-
-  // Group by exact pinyin (includes tone mark, so shì ≠ shí ≠ shǐ etc.).
-  var groups = {};
-  pool.forEach(function(entry) {
-    var key = entry.pinyin.trim();
-    if (!groups[key]) { groups[key] = []; }
-    groups[key].push(entry);
-  });
-
-  // Keep only groups with 2+ members, then sort alphabetically by pinyin.
-  var homophones = Object.keys(groups)
-    .filter(function(k) { return groups[k].length >= 2; })
-    .sort()
-    .map(function(k) { return { pinyin: k, members: groups[k] }; });
-
   var inDeck = new Set(cards.map(function(c) { return c.character; }));
-
-  if (homophones.length === 0) {
-    document.getElementById("explore-content").innerHTML =
-      '<p style="color:var(--color-muted);text-align:center;margin-top:40px;">No homophone groups found yet.</p>';
-    return;
-  }
-
   var html = '';
-  homophones.forEach(function(group) {
-    html += '<div class="sound-group"><div class="sound-group-header">' + group.pinyin + '</div><div class="member-grid">';
+
+  SOUND_ALIKES.forEach(function(group) {
+    html +=
+      '<div class="sound-group">' +
+        '<div class="sound-group-header">' + group.pinyin + '</div>' +
+        '<div class="sound-group-desc">' + group.description + '</div>' +
+        '<div class="member-grid">';
+
     group.members.forEach(function(m) {
       var alreadyIn = inDeck.has(m.character);
       var btnClass  = alreadyIn ? 'member-add-btn in-deck' : 'member-add-btn';
@@ -1005,16 +967,17 @@ function renderSoundAlikes() {
       html +=
         '<div class="member-card">' +
           '<div class="member-char">' + m.character + '</div>' +
-          '<div class="member-pinyin">' + m.pinyin + '</div>' +
+          '<div class="member-pinyin">' + group.pinyin + '</div>' +
           '<div class="member-meaning">' + m.meaning + '</div>' +
           '<button class="' + btnClass + '" ' + btnExtra + ' ' +
             'onclick="addFromExplore(\'' + m.character.replace(/'/g, "\\'") + '\',\'' +
-              m.pinyin.replace(/'/g, "\\'") + '\',\'' +
+              group.pinyin.replace(/'/g, "\\'") + '\',\'' +
               m.meaning.replace(/'/g, "\\'") + '\',\'Sounds\', this)">' +
             btnLabel +
           '</button>' +
         '</div>';
     });
+
     html += '</div></div>';
   });
 
