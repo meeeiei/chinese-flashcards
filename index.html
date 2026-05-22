@@ -108,6 +108,16 @@
         />
       </div>
 
+      <!-- Thai Meaning field -->
+      <div class="field">
+        <label for="input-thai">Thai Meaning</label>
+        <input
+          type="text"
+          id="input-thai"
+          placeholder="e.g. สวัสดี"
+        />
+      </div>
+
       <!-- Tags (checkboxes + free-text new tag) -->
       <div class="field">
         <label>Tags <span class="hint">(check existing · or type a new one below)</span></label>
@@ -292,6 +302,7 @@
             <canvas class="card-back-canvas" id="card-back-canvas"></canvas>
             <p class="card-hint">meaning</p>
             <p class="card-meaning" id="card-meaning">hello</p>
+            <p class="card-meaning-thai" id="card-meaning-thai"></p>
             <div class="card-tags"  id="card-tags-back"></div>
           </div>
 
@@ -340,6 +351,8 @@
                 onclick="setQuizMode('forward')">Chinese &#8594; English</button>
         <button id="dir-reverse" class="filter-btn"
                 onclick="setQuizMode('reverse')">English &#8594; Chinese</button>
+        <button id="dir-thai" class="filter-btn"
+                onclick="setQuizMode('thai')">Thai &#8594; Chinese</button>
       </div>
       <p class="quiz-option-label">Deck</p>
       <div id="quiz-filter-bar"></div>

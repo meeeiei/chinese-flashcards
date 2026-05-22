@@ -153,6 +153,24 @@ function loadCards() {
   const stored = localStorage.getItem("flashcards");
   cards = stored ? JSON.parse(stored) : [];
   // "stored ? ... : []" means: if stored is not null, parse it; otherwise use []
+
+  // Migration: fill in meaningThai from STARTER_DECKS for any saved cards that lack it.
+  var deckLookup = {};
+  STARTER_DECKS.forEach(function(deck) {
+    deck.cards.forEach(function(c) {
+      if (c.meaningThai && !deckLookup[c.character]) {
+        deckLookup[c.character] = c.meaningThai;
+      }
+    });
+  });
+  var migrated = false;
+  cards.forEach(function(card) {
+    if (!card.meaningThai && deckLookup[card.character]) {
+      card.meaningThai = deckLookup[card.character];
+      migrated = true;
+    }
+  });
+  if (migrated) { saveCards(); }
 }
 
 function saveCards() {
@@ -348,9 +366,10 @@ function addCard(event) {
 
   // Read what the user typed in the three text boxes.
   // .trim() removes any accidental leading/trailing spaces.
-  const character = document.getElementById("input-character").value.trim();
-  const pinyin    = document.getElementById("input-pinyin").value.trim();
-  const meaning   = document.getElementById("input-meaning").value.trim();
+  const character    = document.getElementById("input-character").value.trim();
+  const pinyin       = document.getElementById("input-pinyin").value.trim();
+  const meaning      = document.getElementById("input-meaning").value.trim();
+  const meaningThai  = document.getElementById("input-thai").value.trim();
 
   // Find every checkbox with name="tag" that is currently checked,
   // then collect just their values (e.g. ["HSK1", "Food"]).
@@ -367,7 +386,7 @@ function addCard(event) {
 
   if (editingIndex !== -1) {
     // Edit mode: replace the card at editingIndex, keeping its known state.
-    cards[editingIndex] = { character, pinyin, meaning, tags, known: cards[editingIndex].known };
+    cards[editingIndex] = { character, pinyin, meaning, meaningThai, tags, known: cards[editingIndex].known };
     editingIndex = -1;
     document.getElementById("submit-btn").textContent  = "Add Card";
     document.getElementById("add-heading").textContent = "Add a New Card";
@@ -378,7 +397,7 @@ function addCard(event) {
     // Add mode: push a brand-new card.
     // { character, pinyin, meaning, tags } is shorthand for
     // { character: character, pinyin: pinyin, ... }
-    cards.push({ character, pinyin, meaning, tags, known: false, interval: 1, nextReview: null });
+    cards.push({ character, pinyin, meaning, meaningThai, tags, known: false, interval: 1, nextReview: null });
     saveCards();
     event.target.reset();
     // Show the "Card saved!" confirmation for 2 seconds, then hide it.
@@ -503,6 +522,8 @@ function renderCard(index) {
   document.getElementById("card-pinyin").textContent    = card.pinyin;
   document.getElementById("card-meaning").textContent   = card.meaning;
 
+  document.getElementById("card-meaning-thai").textContent = card.meaningThai || "";
+
   // Update the "Card X of Y" counter.
   // index is 0-based internally, but humans count from 1, so we add 1.
   document.getElementById("card-counter").textContent =
@@ -521,6 +542,7 @@ function renderCard(index) {
   renderKnownButtons(card.known);
   renderProgress();
 }
+
 
 // Helper: fills a tag container with small pill-shaped <span> elements.
 function renderTagPills(containerId, tags) {
@@ -656,10 +678,11 @@ function editCard() {
 
   editingIndex = cards.indexOf(card);
 
-  // Pre-fill the three text fields with the card's current values.
+  // Pre-fill the text fields with the card's current values.
   document.getElementById("input-character").value = card.character;
   document.getElementById("input-pinyin").value    = card.pinyin;
   document.getElementById("input-meaning").value   = card.meaning;
+  document.getElementById("input-thai").value      = card.meaningThai || "";
 
   // Uncheck every tag checkbox, then re-check only the ones this card has.
   document.querySelectorAll('input[name="tag"]').forEach(function(box) {
@@ -794,12 +817,16 @@ function setQuizMode(mode) {
   quizMode = mode;
   document.getElementById("dir-forward").classList.toggle("active-filter", mode === "forward");
   document.getElementById("dir-reverse").classList.toggle("active-filter", mode === "reverse");
+  document.getElementById("dir-thai").classList.toggle("active-filter", mode === "thai");
 }
 
 function startQuiz() {
   var pool = quizFilter === "All"
     ? cards
     : cards.filter(function(c) { return c.tags.includes(quizFilter); });
+  if (quizMode === "thai") {
+    pool = pool.filter(function(c) { return c.meaningThai && c.meaningThai.trim(); });
+  }
   if (pool.length === 0) { return; }
   quizCards = shuffleArray(pool);
   quizIndex = 0;
@@ -820,6 +847,14 @@ function renderQuizQuestion() {
     document.getElementById("quiz-forward-form").style.display     = "none";
     document.getElementById("quiz-reveal-btn").style.display       = "";
     showQuizScreen("quiz-question");
+  } else if (quizMode === "thai") {
+    // Show Thai meaning only; user guesses the Chinese character.
+    document.getElementById("quiz-character").textContent          = "";
+    document.getElementById("quiz-pinyin").textContent             = "";
+    document.getElementById("quiz-meaning").textContent            = card.meaningThai || "";
+    document.getElementById("quiz-forward-form").style.display     = "none";
+    document.getElementById("quiz-reveal-btn").style.display       = "";
+    showQuizScreen("quiz-question");
   } else {
     // Show meaning only; hide character/pinyin + input form; show reveal button.
     document.getElementById("quiz-character").textContent          = "";
@@ -836,6 +871,14 @@ function revealAnswer() {
   if (quizMode === "forward") {
     document.getElementById("quiz-verdict").textContent = card.meaning;
     document.getElementById("quiz-verdict").className   = "quiz-verdict";
+    if (card.meaningThai) {
+      document.getElementById("quiz-verdict").innerHTML +=
+        '<br><span class="thai-in-quiz">' + card.meaningThai + '</span>';
+    }
+  } else if (quizMode === "thai") {
+    document.getElementById("quiz-verdict").textContent = card.character;
+    document.getElementById("quiz-verdict").className   = "card-character";
+    document.getElementById("quiz-reveal").textContent  = card.pinyin;
   } else {
     document.getElementById("quiz-verdict").textContent = card.character;
     document.getElementById("quiz-verdict").className   = "card-character";
@@ -1029,16 +1072,21 @@ function loadDeck(id, btn) {
         existing.tags.push(deck.tag);
         added++;
       }
+      // Backfill meaningThai if the saved card is missing it.
+      if (!existing.meaningThai && c.meaningThai) {
+        existing.meaningThai = c.meaningThai;
+      }
     } else {
       // Brand-new character — push a fresh card.
       cards.push({
-        character:  c.character,
-        pinyin:     c.pinyin,
-        meaning:    c.meaning,
-        tags:       [deck.tag],
-        known:      false,
-        interval:   1,
-        nextReview: null
+        character:   c.character,
+        pinyin:      c.pinyin,
+        meaning:     c.meaning,
+        meaningThai: c.meaningThai || "",
+        tags:        [deck.tag],
+        known:       false,
+        interval:    1,
+        nextReview:  null
       });
       added++;
     }
