@@ -741,11 +741,9 @@ function renderQuizQuestion() {
     document.getElementById("quiz-character").textContent          = card.character;
     document.getElementById("quiz-pinyin").textContent             = card.pinyin;
     document.getElementById("quiz-meaning").textContent            = "";
-    document.getElementById("quiz-forward-form").style.display     = "";
-    document.getElementById("quiz-reveal-btn").style.display       = "none";
-    document.getElementById("quiz-answer").value = "";
+    document.getElementById("quiz-forward-form").style.display     = "none";
+    document.getElementById("quiz-reveal-btn").style.display       = "";
     showQuizScreen("quiz-question");
-    document.getElementById("quiz-answer").focus();
   } else {
     // Show meaning only; hide character/pinyin + input form; show reveal button.
     document.getElementById("quiz-character").textContent          = "";
@@ -759,10 +757,14 @@ function renderQuizQuestion() {
 
 function revealAnswer() {
   const card = quizCards[quizIndex];
-  // Reuse the feedback screen: show the character large, pinyin below, then self-report buttons.
-  document.getElementById("quiz-verdict").textContent = card.character;
-  document.getElementById("quiz-verdict").className   = "card-character";
-  document.getElementById("quiz-reveal").textContent  = card.pinyin;
+  if (quizMode === "forward") {
+    document.getElementById("quiz-verdict").textContent = card.meaning;
+    document.getElementById("quiz-verdict").className   = "quiz-verdict";
+  } else {
+    document.getElementById("quiz-verdict").textContent = card.character;
+    document.getElementById("quiz-verdict").className   = "card-character";
+    document.getElementById("quiz-reveal").textContent  = card.pinyin;
+  }
   document.getElementById("quiz-next-btn").style.display    = "none";
   document.getElementById("quiz-self-report").style.display = "";
   showQuizScreen("quiz-feedback");
