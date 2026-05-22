@@ -486,6 +486,7 @@ function renderCard(index) {
   // Always start on the front face — remove .flipped if it was there.
   document.getElementById("card-inner").classList.remove("flipped");
   stopCardParticles();
+  hideCardExamples();
 
   // Reflect this card's known/not-yet state on the buttons and progress line.
   renderKnownButtons(card.known);
@@ -516,9 +517,35 @@ function flipCard() {
   inner.classList.toggle("flipped");
   if (inner.classList.contains("flipped")) {
     startCardParticles();
+    renderCardExamples();
   } else {
     stopCardParticles();
+    hideCardExamples();
   }
+}
+
+function renderCardExamples() {
+  var panel = document.getElementById("card-examples");
+  var card  = filteredCards[currentIndex];
+  if (!panel || !card) return;
+  var exs = (typeof CHARACTER_EXAMPLES !== "undefined")
+              ? CHARACTER_EXAMPLES[card.character] : null;
+  if (!exs || exs.length === 0) { panel.style.display = "none"; return; }
+  var html = '<p class="examples-label">Examples</p>';
+  exs.forEach(function(e) {
+    html += '<div class="example-row">'
+          + '<span class="ex-word">'    + e.word    + '</span>'
+          + '<span class="ex-pinyin">'  + e.pinyin  + '</span>'
+          + '<span class="ex-meaning">' + e.meaning + '</span>'
+          + '</div>';
+  });
+  panel.innerHTML = html;
+  panel.style.display = "block";
+}
+
+function hideCardExamples() {
+  var panel = document.getElementById("card-examples");
+  if (panel) panel.style.display = "none";
 }
 
 
