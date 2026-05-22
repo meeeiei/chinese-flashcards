@@ -29,6 +29,7 @@ let quizCards     = [];   // shuffled copy of cards for the current quiz round
 let quizIndex     = 0;    // which question we are on (0-based)
 let quizScore     = 0;    // number of correct answers so far
 let quizMode      = "forward"; // "forward" = Chinese→English | "reverse" = English→Chinese
+let quizFilter    = "All"; // which tag/deck to quiz ("All" or a tag name)
 var exploreMode   = "families"; // "families" or "sounds" — which sub-view is active
 
 
@@ -156,6 +157,34 @@ function loadCards() {
 
 function saveCards() {
   localStorage.setItem("flashcards", JSON.stringify(cards));
+}
+
+function getDeckRank(tag) {
+  var total = cards.filter(function(c) { return c.tags.includes(tag); }).length;
+  if (total === 0) return { label: "", emoji: "", pct: 0, known: 0, total: 0 };
+  var known = cards.filter(function(c) { return c.tags.includes(tag) && c.known; }).length;
+  var pct = Math.round(known / total * 100);
+  if (pct >= 100) return { label: "PLATINUM", emoji: "💎", pct: 100, known: known, total: total };
+  if (pct >= 75)  return { label: "GOLD",     emoji: "🥇", pct: pct, known: known, total: total };
+  if (pct >= 50)  return { label: "SILVER",   emoji: "🥈", pct: pct, known: known, total: total };
+  if (pct >= 1)   return { label: "BRONZE",   emoji: "🥉", pct: pct, known: known, total: total };
+  return { label: "", emoji: "", pct: 0, known: 0, total: total };
+}
+
+function xpBarHTML(tag) {
+  var r = getDeckRank(tag);
+  if (!r.label) {
+    return '<div class="xp-bar-wrap">' +
+      '<div class="xp-bar-track"><div class="xp-bar-fill" style="width:0%"></div></div>' +
+      '<span class="xp-label">0 / ' + r.total + ' known</span>' +
+    '</div>';
+  }
+  return '<div class="xp-bar-wrap">' +
+    '<div class="xp-bar-track xp-' + r.label.toLowerCase() + '">' +
+      '<div class="xp-bar-fill" style="width:' + r.pct + '%"></div>' +
+    '</div>' +
+    '<span class="xp-label">' + r.emoji + ' ' + r.label + ' · ' + r.known + ' / ' + r.total + ' known</span>' +
+  '</div>';
 }
 
 
@@ -698,11 +727,55 @@ function showQuizScreen(id) {
   });
 }
 
+function renderQuizFilterButtons() {
+  var bar = document.getElementById("quiz-filter-bar");
+  bar.innerHTML = "";
+
+  var tagSet = new Set();
+  cards.forEach(function(card) {
+    card.tags.forEach(function(tag) { tagSet.add(tag); });
+  });
+
+  var sortedTags = Array.from(tagSet).sort(function(a, b) {
+    var aHsk = a.match(/^HSK\s*(\d)/i);
+    var bHsk = b.match(/^HSK\s*(\d)/i);
+    if (aHsk && bHsk) { return parseInt(aHsk[1]) - parseInt(bHsk[1]); }
+    if (aHsk) { return -1; }
+    if (bHsk) { return  1; }
+    return a.localeCompare(b);
+  });
+
+  ["All"].concat(sortedTags).forEach(function(tag) {
+    var btn = document.createElement("button");
+    btn.className = "filter-btn";
+    if (tag === "All") {
+      btn.textContent = "All";
+    } else {
+      var r = getDeckRank(tag);
+      btn.textContent = (r.emoji ? r.emoji + " " : "") + tag;
+    }
+    if (tag === quizFilter) { btn.classList.add("active-filter"); }
+    btn.onclick = function() {
+      quizFilter = tag;
+      renderQuizStart();
+    };
+    bar.appendChild(btn);
+  });
+}
+
 function renderQuizStart() {
-  const count = cards.length;
+  renderQuizFilterButtons();
+
+  var pool = quizFilter === "All"
+    ? cards
+    : cards.filter(function(c) { return c.tags.includes(quizFilter); });
+
+  var count = pool.length;
   document.getElementById("quiz-start-msg").textContent =
     count === 0
-      ? "No cards yet — add some in the Add Card tab."
+      ? (cards.length === 0
+          ? "No cards yet — add some in the Add Card tab."
+          : "No cards match that filter.")
       : count + " card" + (count === 1 ? "" : "s") + " ready.";
   showQuizScreen("quiz-start");
 }
@@ -724,8 +797,11 @@ function setQuizMode(mode) {
 }
 
 function startQuiz() {
-  if (cards.length === 0) { return; }
-  quizCards = shuffleArray(cards);
+  var pool = quizFilter === "All"
+    ? cards
+    : cards.filter(function(c) { return c.tags.includes(quizFilter); });
+  if (pool.length === 0) { return; }
+  quizCards = shuffleArray(pool);
   quizIndex = 0;
   quizScore = 0;
   renderQuizQuestion();
@@ -771,6 +847,13 @@ function revealAnswer() {
 }
 
 function selfReport(correct) {
+  var card = quizCards[quizIndex];
+  var realCard = cards.find(function(c) { return c.character === card.character; });
+  if (realCard) {
+    realCard.known = correct;
+    updateSpacedRepetition(realCard, correct);
+    saveCards();
+  }
   if (correct) { quizScore++; }
   nextQuestion();
 }
@@ -808,6 +891,82 @@ function nextQuestion() {
 }
 
 
+// ---- MY DECKS -----------------------------------------------
+// Shows all tags the user has on their cards, with options to
+// delete all cards in that tag, or just strip the tag label.
+// -------------------------------------------------------------
+
+function renderMyDecks() {
+  var section = document.getElementById("my-decks-section");
+  var grid    = document.getElementById("my-decks-grid");
+  grid.innerHTML = "";
+
+  // Gather every unique tag currently on any card.
+  var tagSet = new Set();
+  cards.forEach(function(card) {
+    card.tags.forEach(function(tag) { tagSet.add(tag); });
+  });
+
+  if (tagSet.size === 0) {
+    section.style.display = "none";
+    return;
+  }
+  section.style.display = "";
+
+  var sortedTags = Array.from(tagSet).sort(function(a, b) {
+    var aHsk = a.match(/^HSK\s*(\d)/i);
+    var bHsk = b.match(/^HSK\s*(\d)/i);
+    if (aHsk && bHsk) { return parseInt(aHsk[1]) - parseInt(bHsk[1]); }
+    if (aHsk) { return -1; }
+    if (bHsk) { return  1; }
+    return a.localeCompare(b);
+  });
+
+  sortedTags.forEach(function(tag) {
+    var count = cards.filter(function(c) { return c.tags.includes(tag); }).length;
+
+    var tile = document.createElement("div");
+    tile.className = "deck-tile my-deck-tile";
+    tile.innerHTML =
+      '<div class="deck-tile-name">' + tag + '</div>' +
+      xpBarHTML(tag) +
+      '<div class="deck-tile-count">' + count + ' card' + (count === 1 ? '' : 's') + '</div>' +
+      '<button class="btn-delete my-deck-delete-btn">Delete</button>' +
+      '<div class="my-deck-confirm" style="display:none;">' +
+        '<p class="my-deck-confirm-msg">What should happen to the cards?</p>' +
+        '<button class="btn-nav my-deck-confirm-btn" ' +
+          'onclick="deleteUserDeck(\'' + tag.replace(/'/g, "\\'") + '\', \'tag\')">Keep cards, remove tag</button>' +
+        '<button class="btn-delete my-deck-confirm-btn" ' +
+          'onclick="deleteUserDeck(\'' + tag.replace(/'/g, "\\'") + '\', \'cards\')">Delete cards too</button>' +
+      '</div>';
+
+    // Wire the Delete button to toggle the confirm panel.
+    tile.querySelector(".my-deck-delete-btn").onclick = function() {
+      var confirm = tile.querySelector(".my-deck-confirm");
+      confirm.style.display = confirm.style.display === "none" ? "" : "none";
+    };
+
+    grid.appendChild(tile);
+  });
+}
+
+function deleteUserDeck(tag, mode) {
+  // Strip the tag from every card that has it.
+  cards.forEach(function(c) {
+    c.tags = c.tags.filter(function(t) { return t !== tag; });
+  });
+
+  if (mode === "cards") {
+    // Remove cards that are now tagless — they belonged exclusively to this deck.
+    // Cards that still have other tags (e.g. HSK1) are kept.
+    cards = cards.filter(function(c) { return c.tags.length > 0; });
+  }
+
+  saveCards();
+  renderDecks();
+}
+
+
 // ---- STARTER DECKS ------------------------------------------
 // renderDecks() builds the tile grid from STARTER_DECKS (in decks.js).
 // loadDeck(id) adds all cards from one deck to localStorage,
@@ -815,11 +974,10 @@ function nextQuestion() {
 // -------------------------------------------------------------
 
 function renderDecks() {
+  renderMyDecks();
+
   var grid = document.getElementById("decks-grid");
   grid.innerHTML = "";
-
-  // Build the set of characters the user already has so we can pre-mark loaded decks.
-  var existing = new Set(cards.map(function(c) { return c.character; }));
 
   // Sort so HSK 1-6 always appear first (in level order), then thematic decks.
   var sorted = STARTER_DECKS.slice().sort(function(a, b) {
@@ -832,8 +990,14 @@ function renderDecks() {
     var tile = document.createElement("div");
     tile.className = "deck-tile";
 
-    // A deck is "already loaded" if every one of its characters is in the collection.
-    var allLoaded = deck.cards.every(function(c) { return existing.has(c.character); });
+    // A deck is "already loaded" if every character is in the collection WITH this deck's tag.
+    // Checking by tag (not just character) means deleting a deck's tag correctly re-enables
+    // the Load button, even if some characters also appear in other decks (e.g. HSK).
+    var allLoaded = deck.cards.every(function(c) {
+      return cards.some(function(card) {
+        return card.character === c.character && card.tags.includes(deck.tag);
+      });
+    });
 
     var btnHtml = allLoaded
       ? '<button class="btn-primary deck-load-btn deck-loaded-btn" disabled>' +
@@ -856,12 +1020,17 @@ function loadDeck(id, btn) {
   var deck = STARTER_DECKS.find(function(d) { return d.id === id; });
   if (!deck) { return; }
 
-  // Build a Set of characters already in the user's collection so we can skip duplicates.
-  var existing = new Set(cards.map(function(c) { return c.character; }));
-
   var added = 0;
   deck.cards.forEach(function(c) {
-    if (!existing.has(c.character)) {
+    var existing = cards.find(function(card) { return card.character === c.character; });
+    if (existing) {
+      // Character already in collection — just add this deck's tag if missing.
+      if (!existing.tags.includes(deck.tag)) {
+        existing.tags.push(deck.tag);
+        added++;
+      }
+    } else {
+      // Brand-new character — push a fresh card.
       cards.push({
         character:  c.character,
         pinyin:     c.pinyin,
@@ -871,12 +1040,14 @@ function loadDeck(id, btn) {
         interval:   1,
         nextReview: null
       });
-      existing.add(c.character);
       added++;
     }
   });
 
   saveCards();
+
+  // Refresh My Decks so the newly loaded deck appears immediately.
+  renderMyDecks();
 
   // Update the button immediately so the user sees feedback right away.
   if (btn) {

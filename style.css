@@ -633,10 +633,26 @@ input[type="text"]:focus {
   text-align: center;
 }
 
+.quiz-option-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 8px;
+}
+
 .quiz-direction {
   display: flex;
   gap: 8px;
   margin-bottom: 20px;
+}
+
+#quiz-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
 }
 
 .quiz-meaning-display {
@@ -828,6 +844,60 @@ input[type="text"]:focus {
   --bear-tummy:           #ffd6e7;
   --bear-inner:           #f9c4d8;
   --bear-eye:             #4a2040;
+}
+
+
+/* ---- MY DECKS --------------------------------------------- */
+#my-decks-section {
+  margin-bottom: 32px;
+}
+
+.my-decks-heading {
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  margin-bottom: 12px;
+}
+
+#my-decks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(155px, 1fr));
+  gap: 14px;
+}
+
+.my-deck-tile {
+  align-items: flex-start;
+}
+
+.my-deck-delete-btn {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  align-self: flex-start;
+}
+
+.my-deck-confirm {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.my-deck-confirm-msg {
+  font-size: 0.76rem;
+  color: var(--color-muted);
+  line-height: 1.4;
+}
+
+.my-deck-confirm-btn {
+  font-size: 0.78rem;
+  padding: 7px 10px;
+  width: 100%;
+  text-align: center;
 }
 
 
@@ -1099,6 +1169,19 @@ input[type="text"]:focus {
   margin-bottom: 12px;
   line-height: 1.4;
 }
+
+
+/* ---- XP / RANK BAR ---------------------------------------- */
+.xp-bar-wrap  { width: 100%; margin: 6px 0 4px; }
+.xp-bar-track { height: 7px; border-radius: 4px; background: var(--color-border); overflow: hidden; }
+.xp-bar-fill  { height: 100%; border-radius: 4px; transition: width 0.5s ease; background: var(--color-muted); }
+
+.xp-bronze .xp-bar-fill { background: linear-gradient(90deg, #b87333, #e8a060); }
+.xp-silver .xp-bar-fill { background: linear-gradient(90deg, #8a9bb0, #c8d8e8); }
+.xp-gold   .xp-bar-fill { background: linear-gradient(90deg, #c8960c, #ffe566); }
+.xp-platinum .xp-bar-fill { background: linear-gradient(90deg, #00c6ff, #a78bfa); }
+
+.xp-label { font-size: 0.68rem; font-weight: 700; letter-spacing: 0.06em; color: var(--color-muted); }
 
 
 /* ---- CARD EXAMPLES PANEL ---------------------------------- */

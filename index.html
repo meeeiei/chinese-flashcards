@@ -334,12 +334,15 @@
     <!-- Start screen -->
     <div id="quiz-start">
       <p id="quiz-start-msg" class="quiz-start-msg"></p>
+      <p class="quiz-option-label">Direction</p>
       <div id="quiz-direction" class="quiz-direction">
         <button id="dir-forward" class="filter-btn active-filter"
                 onclick="setQuizMode('forward')">Chinese &#8594; English</button>
         <button id="dir-reverse" class="filter-btn"
                 onclick="setQuizMode('reverse')">English &#8594; Chinese</button>
       </div>
+      <p class="quiz-option-label">Deck</p>
+      <div id="quiz-filter-bar"></div>
       <button class="btn-primary" onclick="startQuiz()">Start Quiz &#8594;</button>
     </div>
 
@@ -386,6 +389,13 @@
 
   <!-- ===================== STARTER DECKS SECTION ===================== -->
   <section id="section-decks" style="display:none;">
+
+    <!-- My Decks: user-created tag groups -->
+    <div id="my-decks-section" style="display:none;">
+      <h3 class="my-decks-heading">My Decks</h3>
+      <div id="my-decks-grid"></div>
+    </div>
+
     <h2>Starter Decks</h2>
     <p class="decks-intro">Pick a deck and tap "Load" to add all its cards to your collection.</p>
     <div id="decks-grid"></div>
@@ -414,9 +424,9 @@
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
   <script src="families.js?v=1"></script>
   <script src="soundalikes.js?v=2"></script>
-  <script src="decks.js?v=1"></script>
+  <script src="decks.js?v=2"></script>
   <script src="examples.js?v=3"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=11"></script>
 
   <!-- Theme switching lives here too so it always works regardless of app.js caching -->
   <script>
