@@ -60,13 +60,15 @@ async function initAuth() {
 
 // Updates the Sign In / Sign Out button in the header.
 function updateAuthButton() {
-  var btn = document.getElementById("auth-btn");
+  var btn   = document.getElementById("auth-btn");
+  var email = document.getElementById("auth-email");
   if (!btn) return;
   if (currentUser) {
-    var name = currentUser.email.split("@")[0];
-    btn.textContent = "Sign Out (" + name + ")";
+    if (email) email.textContent = currentUser.email;
+    btn.textContent = "Sign Out";
     btn.onclick = signOutUser;
   } else {
+    if (email) email.textContent = "";
     btn.textContent = "Sign In";
     btn.onclick = signInWithGoogle;
   }

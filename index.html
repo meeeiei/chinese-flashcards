@@ -32,14 +32,19 @@
 
   <!-- ===================== HEADER ===================== -->
   <header>
-    <h1>汉字卡片 <span>Chinese Flashcards</span></h1>
-    <div id="theme-picker" aria-label="Choose a theme">
-      <button class="theme-swatch" data-theme-name="ink"  title="Ink &amp; Parchment" style="background:#b5251c;" onclick="setTheme('ink')"></button>
-      <button class="theme-swatch" data-theme-name="dark" title="Dark Mode"           style="background:#9d8cff;" onclick="setTheme('dark')"></button>
-      <button class="theme-swatch" data-theme-name="neon" title="Neon Futuristic"     style="background:#00ffe7;" onclick="setTheme('neon')"></button>
-      <button class="theme-swatch" data-theme-name="cute" title="Cute Mode"           style="background:#e87ea1;" onclick="setTheme('cute')"></button>
+    <div id="header-left">
+      <h1>汉字卡片 <span>Chinese Flashcards</span></h1>
+      <div id="theme-picker" aria-label="Choose a theme">
+        <button class="theme-swatch" data-theme-name="ink"  title="Ink &amp; Parchment" style="background:#b5251c;" onclick="setTheme('ink')"></button>
+        <button class="theme-swatch" data-theme-name="dark" title="Dark Mode"           style="background:#9d8cff;" onclick="setTheme('dark')"></button>
+        <button class="theme-swatch" data-theme-name="neon" title="Neon Futuristic"     style="background:#00ffe7;" onclick="setTheme('neon')"></button>
+        <button class="theme-swatch" data-theme-name="cute" title="Cute Mode"           style="background:#e87ea1;" onclick="setTheme('cute')"></button>
+      </div>
     </div>
-    <button id="auth-btn" onclick="signInWithGoogle()" style="margin-left:12px;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:0.85rem;font-family:inherit;">Sign In</button>
+    <div id="header-right">
+      <span id="auth-email"></span>
+      <button id="auth-btn" onclick="signInWithGoogle()">Sign In</button>
+    </div>
   </header>
 
   <!-- ===================== NAVIGATION TABS ===================== -->
@@ -441,7 +446,7 @@
   <script src="soundalikes.js?v=2"></script>
   <script src="decks.js?v=2"></script>
   <script src="examples.js?v=3"></script>
-  <script src="app.js?v=13"></script>
+  <script src="app.js?v=14"></script>
 
   <!-- Theme switching lives here too so it always works regardless of app.js caching -->
   <script>
