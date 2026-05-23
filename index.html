@@ -39,6 +39,7 @@
       <button class="theme-swatch" data-theme-name="neon" title="Neon Futuristic"     style="background:#00ffe7;" onclick="setTheme('neon')"></button>
       <button class="theme-swatch" data-theme-name="cute" title="Cute Mode"           style="background:#e87ea1;" onclick="setTheme('cute')"></button>
     </div>
+    <button id="auth-btn" onclick="signInWithGoogle()" style="margin-left:12px;padding:6px 14px;border-radius:6px;border:none;cursor:pointer;font-size:0.85rem;font-family:inherit;">Sign In</button>
   </header>
 
   <!-- ===================== NAVIGATION TABS ===================== -->
@@ -434,6 +435,7 @@
     By the time the browser reaches this line, all the HTML above already exists,
     so app.js can safely find elements by their id.
   -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/pinyin-pro@3/dist/index.js"></script>
   <script src="families.js?v=1"></script>
   <script src="soundalikes.js?v=2"></script>

@@ -33,6 +33,131 @@ let quizFilter    = "All"; // which tag/deck to quiz ("All" or a tag name)
 var exploreMode   = "families"; // "families" or "sounds" — which sub-view is active
 
 
+// ---- SUPABASE -----------------------------------------------
+// Supabase is the cloud backend. Replace the two placeholder values
+// below with YOUR keys from Supabase → Project Settings → Data API → Settings tab.
+//
+// The anon key is safe to put here — it is designed to be public.
+// Your data is protected by Row Level Security (the policies we set up).
+// -------------------------------------------------------------
+
+const SUPABASE_URL = "https://keltcltlscntfggujh.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlaXRjbHRpY3VjbnRmZ2dwdWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MDgxNjgsImV4cCI6MjA5NTA4NDE2OH0.j-BMtPNqWIuhws4RYxnsUxOY2Letgsm0WHaaSTd2_-Y";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+var currentUser = null; // filled in by initAuth() on page load
+
+// Called once at page load. Checks whether the user is already signed in.
+async function initAuth() {
+  var { data } = await sb.auth.getSession();
+  currentUser = data.session ? data.session.user : null;
+  updateAuthButton();
+  if (currentUser) {
+    await downloadCards();
+    renderTagCheckboxes(); // refresh the Add-tab tag list with cloud data
+  }
+}
+
+// Updates the Sign In / Sign Out button in the header.
+function updateAuthButton() {
+  var btn = document.getElementById("auth-btn");
+  if (!btn) return;
+  if (currentUser) {
+    var name = currentUser.email.split("@")[0];
+    btn.textContent = "Sign Out (" + name + ")";
+    btn.onclick = signOutUser;
+  } else {
+    btn.textContent = "Sign In";
+    btn.onclick = signInWithGoogle;
+  }
+}
+
+// Redirects to Google for sign-in. Google sends the user back to this page.
+function signInWithGoogle() {
+  sb.auth.signInWithOAuth({
+    provider: "google",
+    options: { redirectTo: window.location.href }
+  });
+}
+
+// Signs out and reloads the page so everything resets cleanly.
+function signOutUser() {
+  sb.auth.signOut().then(function() { window.location.reload(); });
+}
+
+// ---- FIELD MAPPING ------------------------------------------
+// The app uses different field names than the Supabase table columns.
+//   App field     →  Supabase column
+//   meaningThai   →  thai
+//   interval      →  interval_days
+//   nextReview    →  due_at
+// cardToRow() converts a card to a Supabase row before saving.
+// rowToCard() converts a Supabase row back to a card after loading.
+// -------------------------------------------------------------
+
+function cardToRow(card) {
+  if (!card.id) card.id = crypto.randomUUID(); // give the card a UUID if it doesn't have one
+  return {
+    id:            card.id,
+    user_id:       currentUser.id,
+    character:     card.character   || "",
+    pinyin:        card.pinyin      || "",
+    meaning:       card.meaning     || "",
+    thai:          card.meaningThai || "",
+    tags:          card.tags        || [],
+    known:         card.known       || false,
+    interval_days: card.interval    || 1,
+    due_at:        card.nextReview  || null,
+    ease_factor:   card.easeFactor  || 2.5,
+    review_count:  card.reviewCount || 0,
+  };
+}
+
+function rowToCard(row) {
+  return {
+    id:          row.id,
+    character:   row.character     || "",
+    pinyin:      row.pinyin        || "",
+    meaning:     row.meaning       || "",
+    meaningThai: row.thai          || "",
+    tags:        row.tags          || [],
+    known:       row.known         || false,
+    interval:    row.interval_days || 1,
+    nextReview:  row.due_at        || null,
+    easeFactor:  row.ease_factor   || 2.5,
+    reviewCount: row.review_count  || 0,
+  };
+}
+
+// ---- CLOUD SYNC ---------------------------------------------
+
+// Sends all cards to Supabase. "upsert" = insert new ones + update existing ones.
+async function uploadCards() {
+  if (!currentUser) return;
+  cards.forEach(function(c) { if (!c.id) c.id = crypto.randomUUID(); });
+  var rows = cards.map(cardToRow);
+  var { error } = await sb.from("cards").upsert(rows, { onConflict: "id" });
+  if (error) console.error("Sync error:", error.message);
+}
+
+// Loads all cards from Supabase and replaces the local cards array.
+async function downloadCards() {
+  if (!currentUser) return;
+  var { data, error } = await sb.from("cards").select("*").eq("user_id", currentUser.id);
+  if (error) { console.error("Load error:", error.message); return; }
+
+  if (data.length === 0 && cards.length > 0) {
+    // First time signing in: migrate existing local cards to the cloud.
+    cards.forEach(function(c) { if (!c.id) c.id = crypto.randomUUID(); });
+    await uploadCards();
+    return;
+  }
+
+  cards = data.map(rowToCard);
+  localStorage.setItem("flashcards", JSON.stringify(cards)); // keep local cache in sync
+}
+
+
 // ---- THEMES -------------------------------------------------
 // setTheme(name) swaps the data-theme attribute on <html>.
 // CSS picks this up instantly — every var(--color-...) updates.
@@ -175,6 +300,7 @@ function loadCards() {
 
 function saveCards() {
   localStorage.setItem("flashcards", JSON.stringify(cards));
+  if (currentUser) uploadCards(); // also save to the cloud when signed in
 }
 
 function getDeckRank(tag) {
@@ -386,7 +512,7 @@ function addCard(event) {
 
   if (editingIndex !== -1) {
     // Edit mode: replace the card at editingIndex, keeping its known state.
-    cards[editingIndex] = { character, pinyin, meaning, meaningThai, tags, known: cards[editingIndex].known };
+    cards[editingIndex] = { id: cards[editingIndex].id, character, pinyin, meaning, meaningThai, tags, known: cards[editingIndex].known, interval: cards[editingIndex].interval, nextReview: cards[editingIndex].nextReview };
     editingIndex = -1;
     document.getElementById("submit-btn").textContent  = "Add Card";
     document.getElementById("add-heading").textContent = "Add a New Card";
@@ -397,7 +523,7 @@ function addCard(event) {
     // Add mode: push a brand-new card.
     // { character, pinyin, meaning, tags } is shorthand for
     // { character: character, pinyin: pinyin, ... }
-    cards.push({ character, pinyin, meaning, meaningThai, tags, known: false, interval: 1, nextReview: null });
+    cards.push({ id: crypto.randomUUID(), character, pinyin, meaning, meaningThai, tags, known: false, interval: 1, nextReview: null });
     saveCards();
     event.target.reset();
     // Show the "Card saved!" confirmation for 2 seconds, then hide it.
@@ -1265,6 +1391,7 @@ function addFromExplore(character, pinyin, meaning, tag, btn) {
 
 loadCards();
 loadTheme();
+initAuth(); // check Supabase session; downloads cloud cards if signed in
 
 
 // ---- AUTO-PINYIN --------------------------------------------
