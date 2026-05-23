@@ -41,7 +41,7 @@ var exploreMode   = "families"; // "families" or "sounds" — which sub-view is 
 // Your data is protected by Row Level Security (the policies we set up).
 // -------------------------------------------------------------
 
-const SUPABASE_URL = "https://keltcltlscntfggujh.supabase.co";
+const SUPABASE_URL = "https://keitclticucntfggpujh.supabase.co";
 const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtlaXRjbHRpY3VjbnRmZ2dwdWpoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MDgxNjgsImV4cCI6MjA5NTA4NDE2OH0.j-BMtPNqWIuhws4RYxnsUxOY2Letgsm0WHaaSTd2_-Y";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
