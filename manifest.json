@@ -1,0 +1,24 @@
+{
+  "name": "Chinese Flashcards",
+  "short_name": "汉字卡片",
+  "description": "Learn Chinese characters with spaced repetition flashcards",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#CC2233",
+  "theme_color": "#CC2233",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "icons/icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

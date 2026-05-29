@@ -26,6 +26,19 @@
 
   <!-- Our own CSS file for all visual styling -->
   <link rel="stylesheet" href="style.css?v=2" />
+
+  <!-- PWA: manifest tells the phone the app name, icon, and colors -->
+  <link rel="manifest" href="manifest.json" />
+  <!-- Sets the browser bar color on Android Chrome -->
+  <meta name="theme-color" content="#CC2233" />
+  <!-- iOS Safari: hide the address bar when launched from home screen -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <!-- iOS Safari: make the status bar blend with the app's red theme -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <!-- iOS Safari: name shown below the icon on the home screen -->
+  <meta name="apple-mobile-web-app-title" content="Chinese Flashcards" />
+  <!-- iOS Safari reads this for the home screen icon (ignores manifest icons) -->
+  <link rel="apple-touch-icon" href="icons/icon.svg" />
 </head>
 
 <body>
@@ -462,6 +475,17 @@
       try { saved = localStorage.getItem("flashcards-theme") || "ink"; } catch(e) { saved = "ink"; }
       setTheme(saved);
     })();
+  </script>
+
+  <!-- Register the service worker so the app works offline -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', function() {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(function(reg) { console.log('SW registered:', reg.scope); })
+          .catch(function(err) { console.log('SW failed:', err); });
+      });
+    }
   </script>
 
 </body>
