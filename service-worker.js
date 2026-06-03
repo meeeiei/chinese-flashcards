@@ -3,7 +3,7 @@
 // Intercepts network requests and serves files from a local cache
 // so the app works even without internet.
 
-const CACHE_NAME = 'flashcards-v1';
+const CACHE_NAME = 'flashcards-v2';
 
 // The minimum set of files cached on first install (the "app shell").
 const APP_SHELL = [
@@ -11,7 +11,7 @@ const APP_SHELL = [
   '/index.html',
   '/style.css',
   '/app.js',
-  '/decks.js',
+  '/decks.js?v=4',
   '/examples.js',
   '/families.js',
   '/soundalikes.js',
