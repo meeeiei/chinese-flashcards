@@ -3,7 +3,7 @@
 // Intercepts network requests and serves files from a local cache
 // so the app works even without internet.
 
-const CACHE_NAME = 'flashcards-v2';
+const CACHE_NAME = 'flashcards-v3';
 
 // The minimum set of files cached on first install (the "app shell").
 const APP_SHELL = [
@@ -70,22 +70,24 @@ self.addEventListener('fetch', function(event) {
   // Only cache same-origin requests (files on YOUR Vercel domain)
   if (url.origin !== self.location.origin) return;
 
-  // Cache-first: serve from cache if available, otherwise fetch and store
+  // Network-first: always try the internet first so updates appear automatically.
+  // Fall back to the cache only when the network is unavailable (offline).
   event.respondWith(
-    caches.match(event.request).then(function(cached) {
-      if (cached) return cached;
-
-      return fetch(event.request).then(function(networkResponse) {
-        if (networkResponse && networkResponse.status === 200) {
-          // Clone before storing — a response body can only be read once
-          var responseToCache = networkResponse.clone();
-          caches.open(CACHE_NAME).then(function(cache) {
-            cache.put(event.request, responseToCache);
-          });
-        }
-        return networkResponse;
-      }).catch(function() {
-        // Network failed and nothing in cache — fall back to index.html for page requests
+    fetch(event.request).then(function(networkResponse) {
+      if (networkResponse && networkResponse.status === 200) {
+        // Clone before storing — a response body can only be read once.
+        // Keeps the offline copy fresh after every successful online load.
+        var responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then(function(cache) {
+          cache.put(event.request, responseToCache);
+        });
+      }
+      return networkResponse;
+    }).catch(function() {
+      // Network failed (offline) — serve the saved copy from cache.
+      return caches.match(event.request).then(function(cached) {
+        if (cached) return cached;
+        // Nothing cached — fall back to index.html for page requests.
         if (event.request.headers.get('accept') &&
             event.request.headers.get('accept').includes('text/html')) {
           return caches.match('/index.html');
